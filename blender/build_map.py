@@ -1,4 +1,4 @@
-﻿# Last Drop - island map builder (Blender 5.2, visible window, progressive build)
+﻿# Aguamesa - island map builder (Blender 5.2, visible window, progressive build)
 # Run:  blender.exe --python build_map.py
 import bpy, bmesh, math, random, time, json, os, traceback
 import numpy as np
@@ -1944,11 +1944,11 @@ def orbit_tick():
 def runner():
     i = STATE['i']
     if i >= len(STEPS):
-        status(f"Last Drop map - DONE in {time.time()-T0:.0f}s  -  island.glb + island.blend saved")
+        status(f"Aguamesa map - DONE in {time.time()-T0:.0f}s  -  island.glb + island.blend saved")
         return None
     name, fn = STEPS[i]
     if STATE['phase'] == 0:
-        status(f"Last Drop map  [{i + 1}/{len(STEPS)}]  {name} ...")
+        status(f"Aguamesa map  [{i + 1}/{len(STEPS)}]  {name} ...")
         log(f"STEP {i + 1}: {name}")
         STATE['phase'] = 1
         return 0.25
@@ -1971,7 +1971,7 @@ def runner():
         frame(objs)
     STATE['i'] += 1
     STATE['phase'] = 0
-    status(f"Last Drop map  [{i + 1}/{len(STEPS)}]  {name}  - done ({TIMES[name]:.1f}s)")
+    status(f"Aguamesa map  [{i + 1}/{len(STEPS)}]  {name}  - done ({TIMES[name]:.1f}s)")
     return 1.6 if objs else 0.6
 
 

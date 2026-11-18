@@ -6,7 +6,7 @@
 
 ## 1. Ce qu'on construit
 
-**Last Drop** est un café de minuit en 3D, joué dans un post Reddit.
+**Aguamesa** est un café de minuit en 3D, joué dans un post Reddit.
 
 - **Le geste :** appuyer pour verser, relâcher pour arrêter. Quelques gouttes tombent encore après le relâchement. Le but est d'arriver pile sur la ligne.
 - **Le score :** 100 = parfait. Entre 1 et 99 selon la distance à la ligne. 0 si ça déborde. Les pourboires suivent le score.

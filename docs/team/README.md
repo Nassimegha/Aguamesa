@@ -1,6 +1,6 @@
-# Briefs d'équipe : Last Drop (Reddit Game of the Day Hackathon)
+# Briefs d'équipe : Aguamesa (Reddit Game of the Day Hackathon)
 
-**Ce qu'on construit :** Last Drop, un jeu quotidien sur Reddit (Devvit Web). On appuie pour verser, on relâche pour s'arrêter, et il faut remplir le verre jusqu'à la ligne. Chaque nuit, 5 clients bizarres arrivent avec 5 verres piégés, identiques pour tout le monde. Les pourboires font le score, le café grandit, et la série (streak) 🔥 récompense chaque nuit jouée d'affilée, avec des paliers et des glaçons qui la protègent. On voit le tout en 3D légère : une île en Blender, exportée en .glb, affichée avec Three.js.
+**Ce qu'on construit :** Aguamesa, un jeu quotidien sur Reddit (Devvit Web). On appuie pour verser, on relâche pour s'arrêter, et il faut remplir le verre jusqu'à la ligne. Chaque nuit, 5 clients bizarres arrivent avec 5 verres piégés, identiques pour tout le monde. Les pourboires font le score, le café grandit, et la série (streak) 🔥 récompense chaque nuit jouée d'affilée, avec des paliers et des glaçons qui la protègent. On voit le tout en 3D légère : une île en Blender, exportée en .glb, affichée avec Three.js.
 
 **Ce que le jury note :** Delightful UX · Polish · Reddit-y · Daily Content. Il évite : une interface qui fait « IA », un thème Reddit trop littéral, les clones, les platformers, les shooters et le trivia.
 

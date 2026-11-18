@@ -6,7 +6,7 @@
 
 **Responsable :** P3 : **Mohamed**
 
-**Ta mission :** faire de Last Drop un vrai jeu **quotidien** et **Reddit-y**. Un nouveau post chaque nuit, tout seul. Des scores qu'on ne peut pas tricher. Un classement, une série, un flair, et un partage en commentaire qui donne envie aux autres de jouer. Tu possèdes le squelette dont tout le monde a besoin, et les 14 jours de contenu.
+**Ta mission :** faire d'Aguamesa un vrai jeu **quotidien** et **Reddit-y**. Un nouveau post chaque nuit, tout seul. Des scores qu'on ne peut pas tricher. Un classement, une série, un flair, et un partage en commentaire qui donne envie aux autres de jouer. Tu possèdes le squelette dont tout le monde a besoin, et les 14 jours de contenu.
 
 ---
 

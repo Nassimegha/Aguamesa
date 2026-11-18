@@ -1,4 +1,4 @@
-# Last Drop : le projet complet
+# Aguamesa : le projet complet
 
 *Projet pour le Reddit Game of the Day Hackathon. Date limite : **8 décembre 2026 à 18h PST**, soit **le 9 décembre à 2h du matin heure du Maroc**. Objectif : la 1re place, **Best Daily Game, 15 000 $**.*
 
@@ -6,7 +6,7 @@
 
 ## 1. Le message qui résume tout
 
-**Last Drop** est un jeu quotidien sur Reddit où tu es serveur dans des lieux magiques.
+**Aguamesa** est un jeu quotidien sur Reddit où tu es serveur dans des lieux magiques.
 
 Le geste est un seul doigt : **tu appuies pour verser, tu relâches pour arrêter.** Le but est de remplir le verre **exactement jusqu'à la ligne**. Tout le monde comprend en 1 seconde, sans lire de règles.
 
@@ -25,9 +25,9 @@ On joue **seul**, sans attendre personne, mais on sent la communauté partout :
 
 ## 2. Pourquoi ce projet peut gagner
 
-Les 4 critères des juges, et comment Last Drop répond à chacun :
+Les 4 critères des juges, et comment Aguamesa répond à chacun :
 
-| Critère des juges | Ce que Last Drop apporte |
+| Critère des juges | Ce que Aguamesa apporte |
 |---|---|
 | **Delightful UX** (fun, facile, joli) | Un seul geste, des retours satisfaisants (son qui monte, vibration, liquide qui bouge), des personnages drôles, des échecs comiques |
 | **Polish** (qualité « prêt à publier ») | Un jeu simple, donc on peut le polir à fond en 3 semaines, avec un chargement rapide et un design mobile d'abord |
@@ -40,12 +40,12 @@ Les 4 critères des juges, et comment Last Drop répond à chacun :
 - **krawlings** (meilleur contenu créé par les joueurs) reposait sur l'attachement à un personnage, une streak et du contenu de la communauté.
 - **Monster Dating** (mention honorable) misait sur des personnages drôles.
 
-Last Drop **combine tous ces points forts** dans un jeu plus simple à comprendre que chacun d'eux.
+Aguamesa **combine tous ces points forts** dans un jeu plus simple à comprendre que chacun d'eux.
 
 **Ce que les juges ont dit d'éviter**, et ce qu'on fait à la place :
 - **Une interface qui « fait IA ».** On fait un style dessiné à la main, chaleureux, avec une vraie identité.
 - **Un thème Reddit trop littéral.** Pas de Snoo partout, notre propre univers.
-- **Clones, plateformes simples, shooters, trivia, histoires collaboratives.** Last Drop n'est rien de tout ça.
+- **Clones, plateformes simples, shooters, trivia, histoires collaboratives.** Aguamesa n'est rien de tout ça.
 
 ---
 
@@ -237,7 +237,7 @@ C'est important, car le hackathon s'appelle « Game of the Day ».
 
 ## 7. Les fonctions Reddit (Devvit) à utiliser
 
-| Fonction | Utilisation dans Last Drop |
+| Fonction | Utilisation dans Aguamesa |
 |---|---|
 | **Scheduler** (tâches planifiées) | Publier le post du Service du Jour à minuit, et préparer la boisson du jour |
 | **Redis** | Scores, classement du jour et de tous les temps, streaks, moyennes pour la ligne de la foule, progression de la carte |
@@ -292,7 +292,7 @@ C'est important, car le hackathon s'appelle « Game of the Day ».
 ## 10. Explication détaillée de tout le projet
 
 ### 10.1 L'idée en une phrase
-Last Drop est un jeu où tu remplis des verres pile jusqu'à la ligne, pour des clients drôles, dans 6 lieux magiques, avec un défi commun chaque jour pour tout Reddit.
+Aguamesa est un jeu où tu remplis des verres pile jusqu'à la ligne, pour des clients drôles, dans 6 lieux magiques, avec un défi commun chaque jour pour tout Reddit.
 
 ### 10.2 Pourquoi un geste aussi simple ?
 Les juges notent surtout **l'expérience** et la **finition**. Un jeu simple :
@@ -303,7 +303,7 @@ Les juges notent surtout **l'expérience** et la **finition**. Un jeu simple :
 La profondeur ne vient pas de règles compliquées. Elle vient des **twists de verres**, des **lieux**, des **personnages** et de la **communauté**.
 
 ### 10.3 Comment se passe une session typique
-1. Le joueur voit le post « Last Drop : Service du 18 novembre 🍹 Midnight Mango » sur Reddit.
+1. Le joueur voit le post « Aguamesa : Service du 18 novembre 🍹 Midnight Mango » sur Reddit.
 2. Il tape, et le jeu s'ouvre directement sur le comptoir.
 3. Il sert 5 clients en 1 à 2 minutes, et voit la ligne de la foule après chaque verre.
 4. Il voit son score (par exemple 451/500), sa streak (🔥12) et son classement.
@@ -348,7 +348,7 @@ C'est cette combinaison, simple à comprendre mais riche à long terme, qui donn
 
 ### 10.8 Le texte de présentation pour Devpost (en anglais, car les juges lisent en anglais)
 
-> **Last Drop**: hold to pour, release to stop, hit the line. Every night, quirky customers bring their own glasses (a giant's mug, a fairy's thimble, a ghost's fading glass) across 6 magical places, from a midnight café to a haunted castle. Play the same Daily Service as all of Reddit, see where the crowd stopped, keep your streak, unlock new places, follow each regular's story, and let the comments pick tomorrow's special drink. One finger. One minute. One more pour.
+> **Aguamesa**: hold to pour, release to stop, hit the line. Every night, quirky customers bring their own glasses (a giant's mug, a fairy's thimble, a ghost's fading glass) across 6 magical places, from a midnight café to a haunted castle. Play the same Daily Service as all of Reddit, see where the crowd stopped, keep your streak, unlock new places, follow each regular's story, and let the comments pick tomorrow's special drink. One finger. One minute. One more pour.
 
 ### 10.9 Résumé des priorités si le temps manque
 1. Le geste de base parfait. **Rien n'est plus important.**

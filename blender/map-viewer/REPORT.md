@@ -1,4 +1,4 @@
-# Last Drop: island map pipeline test
+# Aguamesa: island map pipeline test
 
 **Pipeline:** Blender (Python, built live in a visible window) → glTF binary → gltf-transform with meshopt compression → Three.js viewer.
 **Folder:** `C:\Users\User\Desktop\claude\last-drop-map-test\`

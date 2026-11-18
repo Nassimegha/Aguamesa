@@ -1,4 +1,4 @@
-# Last Drop
+# Aguamesa
 
 Un jeu quotidien en 3D pour Reddit (Devvit Web) : on appuie pour verser, on relâche pour s'arrêter, et il faut remplir le verre pile jusqu'à la ligne. Chaque nuit, 5 clients bizarres arrivent avec 5 verres piégés, les mêmes pour tout le monde. Il y a une série 🔥, un classement, la ligne de la foule et un partage en commentaire.
 
