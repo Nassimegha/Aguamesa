@@ -3,6 +3,7 @@
 //   http://localhost:5173/src/client/game/dev/night.html                     (a full night, 5 glasses)
 //   http://localhost:5173/src/client/game/dev/night.html?mode=level&id=cafe-03 (Levels mode)
 // Add &auto=1 to let the page pour by itself (each glass lands ~1 % above its line).
+// Add &tutorial=1 to see the first-time tutorial again.
 
 import type { GlassSpec } from '../../../shared/types';
 import { holdMsForLevel, idealHolds } from '../../../shared/pour';
@@ -10,6 +11,7 @@ import { createScene } from '../../world/scene';
 import { loadLocation } from '../../world/location';
 import { createGameAudio } from '../audio';
 import { createGlassStage } from '../glassStage';
+import { glassScreenPoint, showTutorialIfFirstTime } from '../tutorial';
 import { playNight, type PlayGlass } from '../round';
 import { playLevel } from '../levelPlayer';
 import { loadLevel, levelIds } from '../levels';
@@ -53,6 +55,18 @@ async function main(): Promise<void> {
   const roundEvents = {
     onGlassStart(index: number, spec: GlassSpec) {
       hide();
+      if (index === 0 && !auto) {
+        // First visit (or ?tutorial=1): the hand points at the glass once it is on the counter.
+        showTutorialIfFirstTime({
+          inputElement: canvas,
+          anchor: () => {
+            const current = stage.current;
+            if (!current) return { x: innerWidth / 2, y: innerHeight * 0.6 };
+            return glassScreenPoint(current.glass, game.camera, canvas);
+          },
+          force: params.has('tutorial'),
+        });
+      }
       lines.push(`verre ${index + 1} · ${spec.model} · ligne ${spec.line} · client ${spec.customer}`);
       render();
     },

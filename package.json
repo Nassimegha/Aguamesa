@@ -6,7 +6,8 @@
     "dev": "vite",
     "dev:local": "vite",
     "build": "vite build",
-    "test": "node --experimental-strip-types --no-warnings=ExperimentalWarning --test \"src/**/*.test.ts\""
+    "test": "node --experimental-strip-types --no-warnings=ExperimentalWarning --test \"src/**/*.test.ts\"",
+    "levels": "node --experimental-strip-types --no-warnings=ExperimentalWarning src/client/game/dev/buildLevels.ts"
   },
   "dependencies": {
     "meshoptimizer": "^1.3.0",

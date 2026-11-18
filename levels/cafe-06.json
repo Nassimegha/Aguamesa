@@ -1,0 +1,11 @@
+{
+  "id": "cafe-06",
+  "location": "cafe",
+  "glasses": [
+    {"model": "teacup", "line": 0.72, "flow": 0.8, "twist": "steam", "customer": "fairy"},
+    {"model": "pint", "line": 0.78, "flow": 1.25, "twist": "none", "customer": "giant"},
+    {"model": "mug_giant", "line": 0.82, "flow": 1.2, "twist": "steam", "customer": "giant"},
+    {"model": "thimble", "line": 0.55, "flow": 0.7, "twist": "none", "customer": "fairy"}
+  ],
+  "stars": [205, 270, 340]
+}

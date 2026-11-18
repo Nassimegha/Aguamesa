@@ -1,0 +1,11 @@
+{
+  "id": "chalet-05",
+  "location": "chalet",
+  "glasses": [
+    {"model": "mug_giant", "line": 0.7, "flow": 1.25, "twist": "foam", "customer": "yeti"},
+    {"model": "teacup", "line": 0.64, "flow": 0.95, "twist": "none", "customer": "grandma_bear"},
+    {"model": "tankard", "line": 0.74, "flow": 1.15, "twist": "foam", "customer": "skier"},
+    {"model": "goblet", "line": 0.68, "flow": 1.25, "twist": "none", "customer": "grandma_bear"}
+  ],
+  "stars": [205, 270, 335]
+}

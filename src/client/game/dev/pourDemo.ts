@@ -19,6 +19,7 @@ import { createGameAudio } from '../audio';
 import { showCrowdLine, type CrowdLine } from '../crowdLine';
 import { loadGlass } from '../glass';
 import { warmUpGlass } from '../glassStage';
+import { glassScreenPoint, showTutorialIfFirstTime } from '../tutorial';
 import { createPourSession, type PourOutcome, type PourSession } from '../pourSession';
 
 const params = new URLSearchParams(window.location.search);
@@ -110,6 +111,12 @@ async function main(): Promise<void> {
   }
 
   startGlass();
+  // First visit (or ?tutorial=1): the animated hand shows how to pour, pointing at the glass.
+  showTutorialIfFirstTime({
+    inputElement: canvas,
+    anchor: () => glassScreenPoint(glass, game.camera, canvas),
+    force: params.has('tutorial'),
+  });
   game.onTick((dt) => {
     session?.update(dt);
     crowd?.update(dt);

@@ -1,0 +1,11 @@
+{
+  "id": "cafe-07",
+  "location": "cafe",
+  "glasses": [
+    {"model": "pint", "line": 0.66, "flow": 0.75, "twist": "hidden_line", "customer": "ghost"},
+    {"model": "tankard", "line": 0.74, "flow": 1.05, "twist": "leak", "customer": "giant"},
+    {"model": "flute", "line": 0.62, "flow": 0.95, "twist": "none", "customer": "fairy"},
+    {"model": "goblet", "line": 0.7, "flow": 1.05, "twist": "spin", "customer": "ghost"}
+  ],
+  "stars": [205, 270, 340]
+}

@@ -2,11 +2,10 @@
   "id": "cafe-03",
   "location": "cafe",
   "glasses": [
-    { "model": "mug_giant", "line": 0.78, "flow": 1.0, "twist": "none", "customer": "giant" },
-    { "model": "thimble",   "line": 0.60, "flow": 0.6, "twist": "none", "customer": "fairy" },
-    { "model": "goblet",    "line": 0.70, "flow": 1.0, "twist": "none", "customer": "ghost" },
-    { "model": "flute",     "line": 0.65, "flow": 0.9, "twist": "none", "customer": "fairy" },
-    { "model": "tankard",   "line": 0.82, "flow": 1.1, "twist": "none", "customer": "giant" }
+    {"model": "teacup", "line": 0.65, "flow": 0.75, "twist": "none", "customer": "fairy"},
+    {"model": "pint", "line": 0.8, "flow": 1, "twist": "none", "customer": "giant"},
+    {"model": "goblet", "line": 0.7, "flow": 1, "twist": "none", "customer": "ghost"},
+    {"model": "tankard", "line": 0.6, "flow": 1, "twist": "none", "customer": "giant"}
   ],
-  "stars": [250, 350, 425]
+  "stars": [245, 305, 360]
 }
