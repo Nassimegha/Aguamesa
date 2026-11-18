@@ -29,6 +29,7 @@ import {
   overflowLimit,
   pourSequence,
 } from '../../shared/pour';
+import type { PourSound } from './audio';
 import type { Glass } from './glass';
 import { createHoldInput, type HoldInput } from './input';
 import { createLiquid, type Liquid, type LiquidColors } from './liquid';
@@ -74,6 +75,8 @@ export interface PourSessionOptions {
   colors?: LiquidColors;
   /** Lets the spin twist know where the player is. Optional. */
   camera?: THREE.Camera;
+  /** Sounds and vibration (audio.ts). Optional: without it the pour is silent. */
+  sound?: PourSound;
 }
 
 /**
@@ -100,7 +103,7 @@ function settleMsFor(spec: GlassSpec, iceAlreadyIn: boolean): number {
 const ease = (k: number): number => k * k * (3 - 2 * k);
 
 export function createPourSession(options: PourSessionOptions): PourSession {
-  const { glass, spec, events = {} } = options;
+  const { glass, spec, events = {}, sound } = options;
   const liquid = createLiquid(glass, options.colors);
   const twist = createTwistVisual({
     glass,
@@ -139,6 +142,7 @@ export function createPourSession(options: PourSessionOptions): PourSession {
       if (state !== 'ready') return;
       state = 'pouring';
       liquid.setPouring(true);
+      sound?.pourStart();
       twist.onPourStart?.(holds.length);
       if (holds.length === 0) events.onPourStart?.();
     },
@@ -150,6 +154,7 @@ export function createPourSession(options: PourSessionOptions): PourSession {
       holds.push(hold);
       phaseMs = 0;
       liquid.setPouring(false);
+      sound?.pourStop(shown);
       twist.onRelease?.(holds.length - 1);
     },
   });
@@ -178,6 +183,7 @@ export function createPourSession(options: PourSessionOptions): PourSession {
     shown = outcome.level;
     foam = spec.twist === 'foam' && shown > 0 ? FOAM_HEAD : 0;
     state = 'done';
+    sound?.result(outcome);
     events.onPourEnd?.(outcome);
     resolveFinished(outcome);
   }
@@ -191,6 +197,7 @@ export function createPourSession(options: PourSessionOptions): PourSession {
       if (liquidLevel >= trigger) iceIn = true;
       foam = foamAt(spec, held);
       shown = liquidLevel + (iceIn ? ICE_RISE : 0) + foam;
+      sound?.pourLevel(shown);
       if (shown >= autoStopLevel) input.forceRelease();
     } else if (state === 'dripping') {
       phaseMs = Math.min(phaseMs + deltaSeconds * 1000, DRIP_MS);

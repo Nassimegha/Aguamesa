@@ -8,6 +8,7 @@ import type { GlassSpec } from '../../../shared/types';
 import { holdMsForLevel, idealHolds } from '../../../shared/pour';
 import { createScene } from '../../world/scene';
 import { loadLocation } from '../../world/location';
+import { createGameAudio } from '../audio';
 import { createGlassStage } from '../glassStage';
 import { playNight, type PlayGlass } from '../round';
 import { playLevel } from '../levelPlayer';
@@ -41,7 +42,8 @@ const render = (): void => {
 
 async function main(): Promise<void> {
   const loc = await loadLocation(game, 'cafe');
-  const stage = createGlassStage({ game, inputElement: canvas, placeGlass: (root) => loc.placeGlass(root) });
+  const sound = createGameAudio({ onPlay: (name) => console.log(`SOUND ${name}`) });
+  const stage = createGlassStage({ game, inputElement: canvas, placeGlass: (root) => loc.placeGlass(root), sound });
   game.start();
 
   // With &auto=1, press and release by itself once the glass is ready.
@@ -72,6 +74,7 @@ async function main(): Promise<void> {
       events: {
         ...roundEvents,
         onServerResult(index, result) {
+          stage.showCrowd(index, result);
           lines.push(`   serveur verre ${index + 1}: ${result.score} · foule ${result.crowdLine.toFixed(2)} · battus ${result.beatPercent} %`);
           render();
           console.log(`glass ${index} server ${JSON.stringify(result)}`);

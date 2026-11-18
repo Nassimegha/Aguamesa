@@ -15,6 +15,8 @@ import type { GlassModel, GlassSpec, Twist } from '../../../shared/types';
 import { GLASS_PROFILES, idealHolds } from '../../../shared/pour';
 import { createScene } from '../../world/scene';
 import { loadLocation } from '../../world/location';
+import { createGameAudio } from '../audio';
+import { showCrowdLine, type CrowdLine } from '../crowdLine';
 import { loadGlass } from '../glass';
 import { warmUpGlass } from '../glassStage';
 import { createPourSession, type PourOutcome, type PourSession } from '../pourSession';
@@ -51,7 +53,10 @@ async function main(): Promise<void> {
   }
 
   let session: PourSession | null = null;
+  let crowd: CrowdLine | null = null;
   let lastOutcome: PourOutcome | undefined;
+  const sound = createGameAudio({ onPlay: (name) => console.log(`SOUND ${name}`) });
+  (window as unknown as { __sound: typeof sound }).__sound = sound; // test bench only: lets checks call it
   hud.style.whiteSpace = 'pre';
 
   function showHud(): void {
@@ -65,12 +70,15 @@ async function main(): Promise<void> {
 
   function startGlass(): void {
     session?.dispose();
+    crowd?.dispose();
+    crowd = null;
     scoreEl.classList.remove('show');
     session = createPourSession({
       glass,
       spec,
       inputElement: canvas,
       camera: game.camera,
+      sound,
       events: {
         onPourStart: () => console.log('onPourStart'),
         onPourEnd: (outcome) => {
@@ -78,6 +86,14 @@ async function main(): Promise<void> {
           lastOutcome = outcome;
           scoreEl.textContent = outcome.overflow ? 'Débordement ! 0' : String(outcome.score);
           scoreEl.classList.add('show');
+          // Fake server answer after 250 ms: the crowd stopped a bit under the line.
+          setTimeout(() => {
+            crowd = showCrowdLine(
+              glass,
+              { crowdLine: spec.line - 0.05, beatPercent: Math.round(outcome.score * 0.85) },
+              { camera: game.camera },
+            );
+          }, 250);
           // A NEW tap (press + release) restarts. Listening for pointerdown first matters:
           // after an auto-stop the finger may still be down, and its release must not count.
           setTimeout(() => {
@@ -96,6 +112,7 @@ async function main(): Promise<void> {
   startGlass();
   game.onTick((dt) => {
     session?.update(dt);
+    crowd?.update(dt);
     showHud();
   });
   game.start();
