@@ -82,3 +82,8 @@ Puis copie `loc_cafe.glb` dans `../assets/models/`.
 - Les panneaux des 6 lieux sont des pastilles HTML (comme dans `map-viewer`), pas des objets 3D : `map.ts` projette la position 3D de chaque lieu à l'écran à chaque frame. Les lieux verrouillés (4, 5, 6) affichent 🔒 et « Bientôt », non cliquables.
 - `build_loc_beach.py` et `build_loc_chalet.py` reprennent exactement la structure de `build_loc_cafe.py` (comptoir, mur du fond, étagère, fenêtre, lampe/foyer, un petit animal) avec un habillage différent. Le Chalet montre des sommets enneigés et une cascade par la fenêtre (jamais la mer, contrat et brief 02 Tâche 4).
 - `build_customers_beach.py` et `build_customers_chalet.py` reprennent exactement le pipeline NLA de `build_customers_cafe.py` pour les 6 clients restants (surfeuse, Monsieur Crabe, sirène, yéti, skieuse, grand-mère ourse).
+
+## Optimisation et performance (Tâche 6)
+
+- `triangle_report.mjs` (`node triangle_report.mjs ../assets/models`) compte les triangles de chaque `.glb` du dossier. Sert à vérifier le budget de 50 000 triangles par lieu (contrat/brief §6).
+- Les résultats et ce qui a (et n'a pas) été mesuré sont dans `PERF.md` — en particulier, le FPS réel sur téléphone n'est pas encore mesuré, lire `PERF.md` avant de dire le contraire.

@@ -9,6 +9,7 @@ import { loadLocation } from './world/location';
 import { spawnCustomer, type CustomerId } from './world/customers';
 import { loadMap } from './world/map';
 import { createStreakBoard } from './world/streakBoard';
+import { applyDecor } from './world/decor';
 import { showHome } from './ui/home';
 import { showNightResult } from './ui/nightResult';
 import { showLeaderboard } from './ui/leaderboard';
@@ -143,6 +144,9 @@ async function main(): Promise<void> {
     const board = createStreakBoard(game);
     board.setStreak(Number(params.get('board')) || 12);
   }
+  if (params.has('decor')) {
+    applyDecor(game, params.get('decor')!.split(','));
+  }
 
   for (const name of ['LIQUID_BOTTOM', 'LIQUID_TOP', 'LIQUID_SHAPE'] as const) {
     const found = glass.getObjectByName(name);
@@ -157,6 +161,19 @@ async function main(): Promise<void> {
   if (params.has('debug')) {
     game.camera.position.set(1.3, 1.3, -2.1);
     game.camera.lookAt(new THREE.Vector3(0, 0.5, 0.4));
+  }
+
+  if (params.has('fps')) {
+    let frames = 0;
+    const t0 = performance.now();
+    const stop = game.onTick(() => {
+      frames++;
+    });
+    setTimeout(() => {
+      stop();
+      const seconds = (performance.now() - t0) / 1000;
+      console.log(`FPS_REPORT ${(frames / seconds).toFixed(1)} fps sur ${seconds.toFixed(1)}s (${frames} frames)`);
+    }, 4000);
   }
 
   game.start();
