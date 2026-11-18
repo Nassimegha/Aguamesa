@@ -8,6 +8,31 @@ import { createScene } from './world/scene';
 import { loadLocation } from './world/location';
 import { spawnCustomer, type CustomerId } from './world/customers';
 import { loadMap } from './world/map';
+import { createStreakBoard } from './world/streakBoard';
+import { showHome } from './ui/home';
+import { showNightResult } from './ui/nightResult';
+import { showLeaderboard } from './ui/leaderboard';
+import { showShelf } from './ui/shelf';
+import type { PlayerState, NightSummary, LeaderboardRow } from './ui/contractTypesTemp';
+
+const MOCK_PLAYER: PlayerState = {
+  username: 'nassime', serverLevel: 12, streak: 12, bestStreak: 15, streakFreezes: 1,
+  lastPlayedDayId: '2026-11-23', tips: 340, stars: { 'cafe-01': 3, 'cafe-02': 2 },
+  collection: ['pint', 'thimble', 'mug_giant'], decor: ['lamp_warm'],
+  playedToday: [false, false, false, false, false],
+};
+
+const MOCK_NIGHT: NightSummary = {
+  dayId: '2026-11-24', scores: [98, 100, 71, 88, 94], total: 451, tips: 58, streak: 12,
+  streakMilestone: 14, freezeUsed: true, rank: 7,
+  shareText: '☕ Nuit #24 🍺98 🧚100 👻71 ⛵88 🧙94 = 451 · 🔥12',
+};
+
+const MOCK_LEADERBOARD: LeaderboardRow[] = [
+  { rank: 1, username: 'mohamed', total: 486, streak: 21 },
+  { rank: 2, username: 'marwa', total: 470, streak: 9 },
+  { rank: 3, username: 'nassime', total: 451, streak: 12 },
+];
 
 const canvas = document.getElementById('game-canvas') as HTMLCanvasElement;
 const game = createScene(canvas);
@@ -79,12 +104,45 @@ async function main(): Promise<void> {
     game.start();
     return;
   }
+  const uiScreen = params.get('ui');
+  if (uiScreen === 'home') {
+    showHome(MOCK_PLAYER, {
+      onServir: () => console.log('✅ onServir'),
+      onCarte: () => console.log('✅ onCarte'),
+      onClassement: () => console.log('✅ onClassement'),
+      onEtagere: () => console.log('✅ onEtagere'),
+    });
+    return;
+  }
+  if (uiScreen === 'night') {
+    showNightResult(MOCK_NIGHT, {
+      onShare: () => console.log('✅ onShare', MOCK_NIGHT.shareText),
+      onClose: () => console.log('✅ onClose'),
+    });
+    return;
+  }
+  if (uiScreen === 'leaderboard') {
+    showLeaderboard(
+      { day: MOCK_LEADERBOARD, all: MOCK_LEADERBOARD, currentUsername: 'nassime' },
+      { onClose: () => console.log('✅ onClose') },
+    );
+    return;
+  }
+  if (uiScreen === 'shelf') {
+    showShelf(MOCK_PLAYER.collection, { onClose: () => console.log('✅ onClose') });
+    return;
+  }
 
   const locParam = (params.get('loc') as 'cafe' | 'beach' | 'chalet' | null) ?? 'cafe';
   const loc = await loadLocation(game, locParam);
   const glass = await game.loadGLB('/assets/models/glass_pint.glb');
   loc.placeGlass(glass);
   game.scene.add(glass);
+
+  if (params.has('board')) {
+    const board = createStreakBoard(game);
+    board.setStreak(Number(params.get('board')) || 12);
+  }
 
   for (const name of ['LIQUID_BOTTOM', 'LIQUID_TOP', 'LIQUID_SHAPE'] as const) {
     const found = glass.getObjectByName(name);
