@@ -8,12 +8,16 @@ import { MeshoptDecoder } from 'meshoptimizer';
 
 const MAX_PIXEL_RATIO = 2;
 
+export type FrameListener = (deltaSeconds: number) => void;
+
 export interface GameScene {
   readonly scene: THREE.Scene;
   readonly camera: THREE.PerspectiveCamera;
   readonly renderer: THREE.WebGLRenderer;
   loadGLB(url: string): Promise<THREE.Group>;
-  start(onFrame?: (deltaSeconds: number) => void): void;
+  /** S'abonne aux mises à jour par frame (ex. AnimationMixer.update). Renvoie une fonction pour se désabonner. */
+  onTick(listener: FrameListener): () => void;
+  start(onFrame?: FrameListener): void;
   dispose(): void;
 }
 
@@ -53,18 +57,36 @@ export function createScene(canvas: HTMLCanvasElement): GameScene {
 
   function loadGLB(url: string): Promise<THREE.Group> {
     return new Promise((resolve, reject) => {
-      loader.load(url, (gltf) => resolve(gltf.scene), undefined, reject);
+      loader.load(
+        url,
+        (gltf) => {
+          // GLTFLoader renvoie les animations à part (gltf.animations), pas sur
+          // gltf.scene : on les recopie pour que AnimationMixer les trouve via
+          // scene.animations (cf. customers.ts).
+          gltf.scene.animations = gltf.animations;
+          resolve(gltf.scene);
+        },
+        undefined,
+        reject,
+      );
     });
   }
 
   let frameHandle = 0;
   let lastTime = performance.now();
+  const listeners = new Set<FrameListener>();
 
-  function start(onFrame?: (deltaSeconds: number) => void): void {
+  function onTick(listener: FrameListener): () => void {
+    listeners.add(listener);
+    return () => listeners.delete(listener);
+  }
+
+  function start(onFrame?: FrameListener): void {
     function tick(now: number): void {
       const deltaSeconds = (now - lastTime) / 1000;
       lastTime = now;
       onFrame?.(deltaSeconds);
+      for (const listener of listeners) listener(deltaSeconds);
       renderer.render(scene, camera);
       frameHandle = requestAnimationFrame(tick);
     }
@@ -77,7 +99,7 @@ export function createScene(canvas: HTMLCanvasElement): GameScene {
     renderer.dispose();
   }
 
-  return { scene, camera, renderer, loadGLB, start, dispose };
+  return { scene, camera, renderer, loadGLB, onTick, start, dispose };
 }
 
 function addWarmEveningLighting(scene: THREE.Scene): void {
