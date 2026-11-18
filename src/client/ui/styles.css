@@ -1,0 +1,73 @@
+/* P2 (Nassime) : styles partagés de l'interface (brief 02 Tâche 5).
+   Papier, craie, néon doux de café. Pas de dégradés violets, pas d'icônes
+   génériques en emoji pour les actions principales. */
+
+:root {
+  --paper: #fbf1dc;
+  --ink: #3b2a1e;
+  --accent: #e0703c;
+  --accent-dark: #a94f28;
+  --chalk: #f3ecd0;
+  --locked: #6b6460;
+}
+
+.map-pins {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.map-pin {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -100%);
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--paper);
+  color: var(--ink);
+  border: 2.5px solid var(--accent);
+  border-radius: 999px;
+  padding: 6px 14px 6px 6px;
+  font: 700 14px "Trebuchet MS", "Segoe UI", sans-serif;
+  box-shadow: 0 4px 10px rgba(40, 25, 10, 0.35);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 0.15s ease;
+}
+
+.map-pin:hover {
+  transform: translate(-50%, -100%) scale(1.06);
+}
+
+.map-pin__num {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.map-pin--locked {
+  border-color: var(--locked);
+  cursor: default;
+  opacity: 0.85;
+}
+
+.map-pin--locked .map-pin__num {
+  background: var(--locked);
+}
+
+.map-pin__name small {
+  display: block;
+  font-weight: 600;
+  font-size: 10px;
+  opacity: 0.75;
+}

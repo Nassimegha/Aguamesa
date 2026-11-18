@@ -3,9 +3,11 @@
 // Sert a verifier les Taches 1, 2 et 3 (scene.ts, les 8 verres, loc_cafe.glb,
 // les 3 clients animes) avant que le serveur Devvit existe.
 import * as THREE from 'three';
+import './ui/styles.css';
 import { createScene } from './world/scene';
 import { loadLocation } from './world/location';
 import { spawnCustomer, type CustomerId } from './world/customers';
+import { loadMap } from './world/map';
 
 const canvas = document.getElementById('game-canvas') as HTMLCanvasElement;
 const game = createScene(canvas);
@@ -30,7 +32,11 @@ async function checkAllGlasses(): Promise<void> {
 }
 
 async function checkCustomers(): Promise<void> {
-  const ids: CustomerId[] = ['giant', 'fairy', 'ghost'];
+  const ids = (new URLSearchParams(window.location.search).get('set') === 'chalet'
+    ? ['yeti', 'skier', 'grandma_bear']
+    : new URLSearchParams(window.location.search).get('set') === 'beach'
+      ? ['surfer', 'crab_mister', 'mermaid']
+      : ['giant', 'fairy', 'ghost']) as const;
   const spacing = 0.7;
   const startX = -((ids.length - 1) * spacing) / 2;
   const cycle: Array<'idle' | 'happy' | 'meh' | 'splashed'> = ['idle', 'happy', 'meh', 'splashed'];
@@ -67,8 +73,15 @@ async function main(): Promise<void> {
     game.start();
     return;
   }
+  if (params.has('map')) {
+    const unlocked = new Set<'cafe' | 'beach' | 'chalet'>(['cafe', 'beach', 'chalet']);
+    await loadMap(game, unlocked, (id) => console.log('✅ entrer dans', id));
+    game.start();
+    return;
+  }
 
-  const loc = await loadLocation(game, 'cafe');
+  const locParam = (params.get('loc') as 'cafe' | 'beach' | 'chalet' | null) ?? 'cafe';
+  const loc = await loadLocation(game, locParam);
   const glass = await game.loadGLB('/assets/models/glass_pint.glb');
   loc.placeGlass(glass);
   game.scene.add(glass);

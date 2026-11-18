@@ -5,12 +5,21 @@
 import * as THREE from 'three';
 import type { GameScene } from './scene';
 
-export type CustomerId = 'giant' | 'fairy' | 'ghost';
+export type CustomerId =
+  | 'giant' | 'fairy' | 'ghost'
+  | 'surfer' | 'crab_mister' | 'mermaid'
+  | 'yeti' | 'skier' | 'grandma_bear';
 
 const CUSTOMER_GLB: Record<CustomerId, string> = {
   giant: '/assets/models/char_giant.glb',
   fairy: '/assets/models/char_fairy.glb',
   ghost: '/assets/models/char_ghost.glb',
+  surfer: '/assets/models/char_surfer.glb',
+  crab_mister: '/assets/models/char_crab_mister.glb',
+  mermaid: '/assets/models/char_mermaid.glb',
+  yeti: '/assets/models/char_yeti.glb',
+  skier: '/assets/models/char_skier.glb',
+  grandma_bear: '/assets/models/char_grandma_bear.glb',
 };
 
 const ANIMATION_NAMES = ['idle', 'happy', 'meh', 'splashed'] as const;
