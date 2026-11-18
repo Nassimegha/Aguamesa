@@ -2,15 +2,23 @@
 // The pour formula from contract 00 §7. Used by BOTH the client (animation)
 // and the server (authoritative score). Same input => same output, always.
 //
-// Rules (00 §7, 01 Task 1):
+// Rules (00 §7, 01 Task 1 and Task 4):
 //   - No Math.random(), no Date, no performance.now(): pure arithmetic only.
+//   - Twists that "look random" (leak amount, when the ice falls) come from a hash of
+//     the glass spec itself (twistSeed), so client and server always agree.
 //   - No runtime imports (only `import type`), so Node, Vite and Devvit can
 //     all load this file as-is.
-//   - Do NOT change the numbers below after Thu 20 Nov without telling P3:
-//     changing them changes every score already stored on the server.
+//   - Do NOT change the numbers below without telling P3: changing them changes
+//     every score already stored on the server.
 //
-// Twists (layers, foam, ice, leak...) are NOT applied yet: they arrive in
-// Task 4, each one deterministic. Until then `spec.twist` is ignored here.
+// Twists (01 Task 4). Only these change the formula:
+//   layers2 / layers3 : 2 or 3 lines, one press per line; score = average of the layers.
+//   foam              : foam rises faster than the liquid, then settles to a small head.
+//                       If the FOAM goes over the rim, it's an overflow.
+//   ice               : an ice cube falls in and pushes the level up by ICE_RISE.
+//   tilt              : the boat tilts, so the glass spills a bit BELOW the rim.
+//   leak              : after release, the level drops by a fixed (seeded) amount.
+// spin, steam and hidden_line are visual only: same formula as 'none'.
 
 import type { GlassModel, GlassSpec } from './types';
 
@@ -48,7 +56,7 @@ export const GLASS_PROFILES: Readonly<Record<GlassModel, GlassProfile>> = {
 };
 
 // ---------------------------------------------------------------------------
-// Tuning constants (frozen after Thu 20 Nov — tell P3 before changing)
+// Tuning constants (tell P3 before changing)
 // ---------------------------------------------------------------------------
 
 /** After release, drops keep falling: equivalent to this many ms of extra pouring at the current flow. */
@@ -62,6 +70,26 @@ export const SCORE_SPREAD = 0.07;
 
 /** Any hold longer than this is treated as this (it overflows every glass anyway). */
 export const MAX_HOLD_MS = 30_000;
+
+/** foam: the tallest the foam can get while pouring (level units, on top of the liquid). */
+export const FOAM_MAX = 0.1;
+/** foam: how fast the foam builds up (ms of pouring at flow 1 to reach ~63 % of FOAM_MAX). */
+export const FOAM_BUILD_MS = 600;
+/** foam: the head left on top once the foam has settled. It counts in the final level. */
+export const FOAM_HEAD = 0.03;
+
+/** ice: how much the ice cube pushes the level up. */
+export const ICE_RISE = 0.07;
+/** ice: the cube falls when the liquid reaches a level between these two (seeded per glass). */
+export const ICE_TRIGGER_MIN = 0.25;
+export const ICE_TRIGGER_MAX = 0.45;
+
+/** tilt: the glass spills this much below the rim. */
+export const TILT_MARGIN = 0.05;
+
+/** leak: the level drops by an amount between these two after release (seeded per glass). */
+export const LEAK_MIN = 0.04;
+export const LEAK_MAX = 0.08;
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -106,12 +134,83 @@ function profileFor(spec: GlassSpec): GlassProfile {
   return profile;
 }
 
+/** Pure pouring time (ms, no drip) for the liquid alone to reach `level`. */
+function pourTimeFor(spec: GlassSpec, level: number): number {
+  const { taper, fullMs } = profileFor(spec);
+  const h = Math.min(Math.max(level, 0), 2); // 2 = well past the rim, enough for any overflow test
+  const fraction = volumeUpTo(taper, h) / volumeUpTo(taper, 1);
+  return (fraction * fullMs) / spec.flow;
+}
+
+/** Score of one level against one line, given the spill limit. */
+function scoreAgainst(level: number, line: number, limit: number): number {
+  if (!Number.isFinite(level) || level > limit) return 0; // overflow
+  const distance = Math.abs(level - line);
+  if (distance < PERFECT_TOLERANCE) return 100;
+  const x = (distance - PERFECT_TOLERANCE) / SCORE_SPREAD;
+  const score = Math.round(1 + 98 * Math.exp(-x * x));
+  return Math.min(99, Math.max(1, score));
+}
+
+// ---------------------------------------------------------------------------
+// Twist parameters (deterministic, from the spec itself)
+// ---------------------------------------------------------------------------
+
+/**
+ * A number in [0, 1) that depends only on the glass spec (FNV-1a hash).
+ * Same spec → same number, on every phone and on the server. `salt` gives
+ * independent numbers for different uses.
+ */
+export function twistSeed(spec: GlassSpec, salt = ''): number {
+  const text = `${spec.model}|${spec.line}|${spec.flow}|${spec.twist}|${spec.customer}|${salt}`;
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0) / 4294967296;
+}
+
+export function isLayered(spec: GlassSpec): boolean {
+  return spec.twist === 'layers2' || spec.twist === 'layers3';
+}
+
+/** The lines to hit, bottom to top. One line, except for layers2 (2) and layers3 (3), evenly spaced up to spec.line. */
+export function layerLines(spec: GlassSpec): number[] {
+  const count = spec.twist === 'layers2' ? 2 : spec.twist === 'layers3' ? 3 : 1;
+  return Array.from({ length: count }, (_, k) => quantize((spec.line * (k + 1)) / count));
+}
+
+/** Level above which the glass spills: 1, or 1 - TILT_MARGIN when the boat tilts. */
+export function overflowLimit(spec: GlassSpec): number {
+  return spec.twist === 'tilt' ? 1 - TILT_MARGIN : 1;
+}
+
+/** foam: foam thickness after pouring for pourMs (0 for other twists). */
+export function foamAt(spec: GlassSpec, pourMs: number): number {
+  if (spec.twist !== 'foam') return 0;
+  const t = sanitizeHold(pourMs);
+  return quantize(FOAM_MAX * (1 - Math.exp(-(spec.flow * t) / FOAM_BUILD_MS)));
+}
+
+/** ice: the liquid level at which the cube falls in (Infinity for other twists). */
+export function iceTrigger(spec: GlassSpec): number {
+  if (spec.twist !== 'ice') return Number.POSITIVE_INFINITY;
+  return quantize(ICE_TRIGGER_MIN + (ICE_TRIGGER_MAX - ICE_TRIGGER_MIN) * twistSeed(spec, 'ice'));
+}
+
+/** leak: how much the level drops after release (0 for other twists). */
+export function leakAmount(spec: GlassSpec): number {
+  if (spec.twist !== 'leak') return 0;
+  return quantize(LEAK_MIN + (LEAK_MAX - LEAK_MIN) * twistSeed(spec, 'leak'));
+}
+
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
 
 /**
- * Level reached after pouring for `pourMs` milliseconds, WITHOUT the trailing drops.
+ * Liquid level after pouring for `pourMs` milliseconds, WITHOUT drops or twist effects.
  * The client calls this every frame while the finger is down to animate the liquid.
  * Can go above 1 (overflow).
  */
@@ -125,23 +224,64 @@ export function levelAfter(spec: GlassSpec, pourMs: number): number {
   return quantize(heightForVolume(taper, volume));
 }
 
-/** Final level (0..1+) after a hold of holdMs, trailing drops included. Deterministic. (00 §7) */
+/** Detailed result of one glass, for any number of presses. */
+export interface PourDetail {
+  /** Final level (0..1+, not capped). */
+  level: number;
+  score: number;
+  overflow: boolean;
+  /** layers: final level after each press (one entry for other twists). */
+  layerLevels: number[];
+  /** The highest the glass got (liquid + ice + foam), used for the overflow check. */
+  peak: number;
+}
+
+/**
+ * The full formula, for one or several presses (`holds`, in ms).
+ * - layers2 / layers3: one press per line, in order; extra presses are ignored,
+ *   missing presses leave their layer at the previous level.
+ * - every other twist: only holds[0] counts.
+ */
+export function pourSequence(spec: GlassSpec, holds: readonly number[]): PourDetail {
+  profileFor(spec); // validates the spec
+  const limit = overflowLimit(spec);
+
+  if (isLayered(spec)) {
+    const lines = layerLines(spec);
+    let pouredMs = 0;
+    const layerLevels = lines.map((_, k) => {
+      const h = sanitizeHold(holds[k] ?? 0);
+      if (h > 0) pouredMs += h + DRIP_MS; // each press has its own trailing drops
+      return pouredMs > 0 ? levelAfter(spec, pouredMs) : 0;
+    });
+    const level = layerLevels[layerLevels.length - 1] ?? 0;
+    const overflow = level > limit;
+    const total = layerLevels.reduce((sum, l, k) => sum + scoreAgainst(l, lines[k]!, limit), 0);
+    const score = overflow ? 0 : Math.round(total / lines.length);
+    return { level, score, overflow, layerLevels, peak: level };
+  }
+
+  const h = sanitizeHold(holds[0] ?? 0);
+  // A tap of 0 ms pours nothing: no drops, no foam, no ice, nothing to leak.
+  const liquid = h > 0 ? levelAfter(spec, h + DRIP_MS) : 0;
+  const ice = spec.twist === 'ice' && liquid > 0 ? ICE_RISE : 0;
+  const peak = quantize(liquid + ice + foamAt(spec, h));
+  const head = spec.twist === 'foam' && liquid > 0 ? FOAM_HEAD : 0;
+  const level = quantize(Math.max(0, liquid + ice + head - leakAmount(spec)));
+  const overflow = peak > limit;
+  const score = overflow ? 0 : scoreAgainst(level, spec.line, limit);
+  return { level, score, overflow, layerLevels: [level], peak };
+}
+
+/** Final level (0..1+) after a hold of holdMs, trailing drops and twist included. Deterministic. (00 §7) */
 export function finalLevel(spec: GlassSpec, holdMs: number): number {
-  const t = sanitizeHold(holdMs);
-  // A tap of 0 ms pours nothing, so nothing drips either.
-  if (t === 0) return 0;
-  return levelAfter(spec, t + DRIP_MS);
+  return pourSequence(spec, [holdMs]).level;
 }
 
 /** Score 0..100 from the final level and the line. (00 §7) */
 export function scoreFor(spec: GlassSpec, level: number): number {
   profileFor(spec); // validates the spec
-  if (!Number.isFinite(level) || level > 1) return 0; // overflow
-  const distance = Math.abs(level - spec.line);
-  if (distance < PERFECT_TOLERANCE) return 100;
-  const x = (distance - PERFECT_TOLERANCE) / SCORE_SPREAD;
-  const score = Math.round(1 + 98 * Math.exp(-x * x));
-  return Math.min(99, Math.max(1, score));
+  return scoreAgainst(level, spec.line, overflowLimit(spec));
 }
 
 /** Shortcut for the server. `level` is capped at 1 (the glass cannot hold more); `overflow` says it spilled. (00 §7) */
@@ -149,19 +289,29 @@ export function pour(
   spec: GlassSpec,
   holdMs: number,
 ): { level: number; score: number; overflow: boolean } {
-  const level = finalLevel(spec, holdMs);
-  const overflow = level > 1;
-  return { level: overflow ? 1 : level, score: scoreFor(spec, level), overflow };
+  const { level, score, overflow } = pourSequence(spec, [holdMs]);
+  return { level: Math.min(level, 1), score, overflow };
 }
 
 /**
- * Inverse of finalLevel: how long to hold so that the FINAL level (drops included) is `target`.
- * Used by tests, the tutorial and level tuning. Returns 0 if the drops alone already reach the target.
+ * Inverse of finalLevel for ONE press: how long to hold so that the final level is `target`.
+ * Takes the twist into account (ice, foam head, leak). Returns 0 if the drops alone reach it.
+ * Used by tests, the tutorial and level tuning.
  */
 export function holdMsForLevel(spec: GlassSpec, target: number): number {
-  const { taper, fullMs } = profileFor(spec);
-  const h = Math.min(Math.max(target, 0), 2); // 2 = well past the rim, enough for any overflow test
-  const fraction = volumeUpTo(taper, h) / volumeUpTo(taper, 1);
-  const pourMs = (fraction * fullMs) / spec.flow;
-  return Math.max(0, pourMs - DRIP_MS);
+  const ice = spec.twist === 'ice' ? ICE_RISE : 0;
+  const head = spec.twist === 'foam' ? FOAM_HEAD : 0;
+  const liquidTarget = target - ice - head + leakAmount(spec);
+  return Math.max(0, pourTimeFor(spec, liquidTarget) - DRIP_MS);
+}
+
+/** The perfect presses for a glass: one per line (layers) or a single one. Each lands exactly on its line. */
+export function idealHolds(spec: GlassSpec): number[] {
+  if (!isLayered(spec)) return [holdMsForLevel(spec, spec.line)];
+  let pouredMs = 0;
+  return layerLines(spec).map((line) => {
+    const hold = Math.max(0, pourTimeFor(spec, line) - pouredMs - DRIP_MS);
+    pouredMs += hold + DRIP_MS;
+    return hold;
+  });
 }

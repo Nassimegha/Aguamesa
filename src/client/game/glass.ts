@@ -23,10 +23,16 @@ export interface Glass {
   levelToLocalY(level: number): number;
   /** Inner radius (root-local units) of the glass at a level, measured from LIQUID_SHAPE. */
   radiusAt(level: number): number;
-  /** Moves the target line to `level` (0..1). */
+  /** Moves the target line to `level` (0..1). Same as setLines([level]). */
   setLine(level: number): void;
-  /** Shows or hides the target line (tutorial, hidden_line twist...). */
+  /** Several target lines (layers twist), bottom to top. */
+  setLines(levels: readonly number[]): void;
+  /** Dims line `index` (e.g. a layer already poured): 1 = bright, 0 = invisible. */
+  setLineOpacity(index: number, opacity: number): void;
+  /** Shows or hides all the target lines (tutorial, hidden_line twist...). */
   setLineVisible(visible: boolean): void;
+  /** The line meshes (for twists that restyle them, e.g. spin). */
+  readonly lineMeshes: readonly THREE.Mesh[];
   dispose(): void;
 }
 
@@ -100,29 +106,42 @@ export function buildGlass(model: GlassModel, root: THREE.Group, isFallback: boo
     return profile[i]! * (1 - t) + profile[i + 1]! * t;
   }
 
-  // --- target line ----------------------------------------------------------------
-  const lineMaterial = new THREE.MeshBasicMaterial({
-    color: LINE_COLOR,
-    transparent: true,
-    opacity: 0.95,
-    depthWrite: false,
-    toneMapped: false,
-  });
-  // Unit ring (radius 1); scaled to the glass radius in setLine().
+  // --- target lines ---------------------------------------------------------------
+  // Unit ring (radius 1), shared by every line; scaled to the glass radius in setLines().
   const lineGeometry = new THREE.TorusGeometry(1, LINE_THICKNESS, 6, 64);
   lineGeometry.rotateX(Math.PI / 2);
-  const line = new THREE.Mesh(lineGeometry, lineMaterial);
-  line.name = 'TARGET_LINE';
-  line.renderOrder = RENDER_ORDER.line;
-  root.add(line);
+  const lines: THREE.Mesh<THREE.TorusGeometry, THREE.MeshBasicMaterial>[] = [];
+  let linesVisible = true;
 
-  function setLine(level: number): void {
-    const r = radiusAt(level) * LINE_RADIUS_FACTOR;
-    line.position.set(0, levelToLocalY(level), 0);
-    // Scale x/z only, so the tube keeps its thickness vertically.
-    line.scale.set(r, 1, r);
+  function setLines(levels: readonly number[]): void {
+    // Create missing rings, hide extra ones.
+    while (lines.length < levels.length) {
+      const material = new THREE.MeshBasicMaterial({
+        color: LINE_COLOR,
+        transparent: true,
+        opacity: 0.95,
+        depthWrite: false,
+        toneMapped: false,
+      });
+      const ring = new THREE.Mesh(lineGeometry, material);
+      ring.name = `TARGET_LINE_${lines.length}`;
+      ring.renderOrder = RENDER_ORDER.line;
+      root.add(ring);
+      lines.push(ring);
+    }
+    lines.forEach((ring, i) => {
+      const level = levels[i];
+      ring.visible = level !== undefined && linesVisible;
+      if (level === undefined) return;
+      const r = radiusAt(level) * LINE_RADIUS_FACTOR;
+      ring.position.set(0, levelToLocalY(level), 0);
+      ring.scale.set(r, 1, r); // x/z only, so the tube keeps its thickness vertically
+      ring.material.opacity = 0.95;
+      ring.userData.active = true;
+    });
+    lines.slice(levels.length).forEach((ring) => (ring.userData.active = false));
   }
-  setLine(0.7);
+  setLines([0.7]);
 
   return {
     model,
@@ -131,14 +150,23 @@ export function buildGlass(model: GlassModel, root: THREE.Group, isFallback: boo
     isFallback,
     levelToLocalY,
     radiusAt,
-    setLine,
+    setLine: (level: number) => setLines([level]),
+    setLines,
+    setLineOpacity(index: number, opacity: number) {
+      const ring = lines[index];
+      if (ring) ring.material.opacity = 0.95 * opacity;
+    },
     setLineVisible(visible: boolean) {
-      line.visible = visible;
+      linesVisible = visible;
+      for (const ring of lines) ring.visible = visible && ring.userData.active === true;
+    },
+    get lineMeshes() {
+      return lines;
     },
     dispose() {
       root.removeFromParent();
       lineGeometry.dispose();
-      lineMaterial.dispose();
+      for (const ring of lines) ring.material.dispose();
       root.traverse((obj) => {
         if (obj instanceof THREE.Mesh) obj.geometry.dispose();
       });

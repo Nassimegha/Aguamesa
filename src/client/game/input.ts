@@ -8,7 +8,9 @@
 //   - A finger that slides off the canvas, a phone call, or switching apps must still
 //     END the pour (otherwise the liquid would keep flowing forever).
 //
-// holdMs is measured with performance.now(), as the brief requires.
+// holdMs is measured on the performance.now() clock, as the brief requires. When the browser
+// gives it, we use event.timeStamp: the moment the finger ACTUALLY touched / lifted, on the
+// same clock. If the phone is busy for a few ms, the handler runs late but the hold stays exact.
 
 export interface HoldInputCallbacks {
   /** The player just pressed. Called once per hold. */
@@ -54,17 +56,28 @@ export function createHoldInput(element: HTMLElement, callbacks: HoldInputCallba
   }
 
   // --- start / end ----------------------------------------------------------------
-  function press(pointerId: number): void {
+
+  /**
+   * When an event happened, on the performance.now() clock. event.timeStamp uses that clock
+   * in every current browser; if it looks wrong (0, or in the future), fall back to now.
+   */
+  function eventTime(event?: Event): number {
+    const now = performance.now();
+    const t = event?.timeStamp ?? 0;
+    return t > 0 && t <= now ? t : now;
+  }
+
+  function press(pointerId: number, event?: Event): void {
     if (!enabled || holding) return;
     holding = true;
     activePointerId = pointerId;
-    pressedAt = performance.now();
+    pressedAt = eventTime(event);
     callbacks.onPress();
   }
 
-  function release(): void {
+  function release(event?: Event): void {
     if (!holding) return;
-    const holdMs = performance.now() - pressedAt;
+    const holdMs = Math.max(0, eventTime(event) - pressedAt);
     holding = false;
     activePointerId = null;
     callbacks.onRelease(holdMs);
@@ -81,12 +94,12 @@ export function createHoldInput(element: HTMLElement, callbacks: HoldInputCallba
     } catch {
       // Some old browsers throw for synthetic pointers: not a problem, pointerup still arrives.
     }
-    press(event.pointerId);
+    press(event.pointerId, event);
   }
 
   function onPointerEnd(event: PointerEvent): void {
     if (event.pointerId !== activePointerId) return;
-    release();
+    release(event);
   }
 
   // --- keyboard (desktop / accessibility): hold Space --------------------------
@@ -94,19 +107,20 @@ export function createHoldInput(element: HTMLElement, callbacks: HoldInputCallba
     if (event.code !== 'Space') return;
     event.preventDefault(); // Space would scroll the page
     if (event.repeat) return; // key auto-repeat is not a new press
-    press(-1);
+    press(-1, event);
   }
 
   function onKeyUp(event: KeyboardEvent): void {
     if (event.code !== 'Space' || activePointerId !== -1) return;
     event.preventDefault();
-    release();
+    release(event);
   }
 
   // --- interruptions: app switch, phone call, tab hidden ----------------------
   function onVisibilityChange(): void {
     if (document.hidden) release();
   }
+  const onBlur = (): void => release();
 
   // --- block the browser's own gestures on the element -------------------------
   const block = (event: Event): void => event.preventDefault();
@@ -122,7 +136,7 @@ export function createHoldInput(element: HTMLElement, callbacks: HoldInputCallba
   element.addEventListener('gesturestart', block); // iOS pinch (Safari only event)
   window.addEventListener('keydown', onKeyDown);
   window.addEventListener('keyup', onKeyUp);
-  window.addEventListener('blur', release);
+  window.addEventListener('blur', onBlur);
   document.addEventListener('visibilitychange', onVisibilityChange);
 
   return {
@@ -135,7 +149,7 @@ export function createHoldInput(element: HTMLElement, callbacks: HoldInputCallba
     setEnabled(value: boolean) {
       enabled = value;
     },
-    forceRelease: release,
+    forceRelease: () => release(),
     dispose() {
       release();
       element.removeEventListener('pointerdown', onPointerDown);
@@ -149,7 +163,7 @@ export function createHoldInput(element: HTMLElement, callbacks: HoldInputCallba
       element.removeEventListener('gesturestart', block);
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
-      window.removeEventListener('blur', release);
+      window.removeEventListener('blur', onBlur);
       document.removeEventListener('visibilitychange', onVisibilityChange);
       for (const [prop, value] of previousStyles) {
         if (value) element.style.setProperty(prop, value);

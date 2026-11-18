@@ -13,6 +13,10 @@ import type { GlassHooks, PlayGlass } from './round';
 /** What the stage needs from P2's GameScene (world/scene.ts). */
 export interface StageScene {
   readonly scene: THREE.Scene;
+  /** Optional: lets the spin twist fade the line when it turns away from the player. */
+  readonly camera?: THREE.Camera;
+  /** Optional: used to prepare the shaders before the first press (see warmUpGlass). */
+  readonly renderer?: THREE.WebGLRenderer;
   loadGLB: GlbLoader;
   onTick(listener: (deltaSeconds: number) => void): () => void;
 }
@@ -33,6 +37,29 @@ export interface GlassStage {
   readonly current: { glass: Glass; session: PourSession } | null;
   /** Removes the last glass (end of the night). */
   clear(): void;
+}
+
+/**
+ * Compiles the shaders of everything in the glass NOW, including the parts that are still
+ * hidden (the liquid at level 0, the stream, the ice cube, the drops...). Otherwise the GPU
+ * compiles them the first time they appear, which is exactly during the first press: the
+ * phone freezes for a moment and the pour feels wrong.
+ */
+export function warmUpGlass(
+  renderer: THREE.WebGLRenderer,
+  scene: THREE.Scene,
+  camera: THREE.Camera,
+  root: THREE.Object3D,
+): void {
+  const hidden: THREE.Object3D[] = [];
+  root.traverse((obj) => {
+    if (!obj.visible) {
+      hidden.push(obj);
+      obj.visible = true;
+    }
+  });
+  renderer.compile(scene, camera);
+  for (const obj of hidden) obj.visible = false;
 }
 
 export function createGlassStage(options: GlassStageOptions): GlassStage {
@@ -59,7 +86,9 @@ export function createGlassStage(options: GlassStageOptions): GlassStage {
       inputElement: options.inputElement,
       events: { onPourStart: hooks.onPourStart },
       ...(options.colors ? { colors: options.colors } : {}),
+      ...(game.camera ? { camera: game.camera } : {}),
     });
+    if (game.renderer && game.camera) warmUpGlass(game.renderer, game.scene, game.camera, glass.root);
     const stopTick = game.onTick((dt) => session.update(dt));
     current = { glass, session, stopTick };
     return session.finished;

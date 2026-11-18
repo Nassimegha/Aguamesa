@@ -5,7 +5,7 @@
 // Add &auto=1 to let the page pour by itself (each glass lands ~1 % above its line).
 
 import type { GlassSpec } from '../../../shared/types';
-import { holdMsForLevel } from '../../../shared/pour';
+import { holdMsForLevel, idealHolds } from '../../../shared/pour';
 import { createScene } from '../../world/scene';
 import { loadLocation } from '../../world/location';
 import { createGlassStage } from '../glassStage';
@@ -102,21 +102,28 @@ async function main(): Promise<void> {
   }
 }
 
-/** Wraps playGlass: waits until the new glass is ready, then simulates a press of the right length. */
+/**
+ * Wraps playGlass: each time the glass is ready, simulates one of the perfect presses
+ * (idealHolds: one per line for layers), aiming ~1 % above the line on single-press glasses.
+ */
 function autoPlayer(
   play: PlayGlass,
   current: () => { session: { state: string } } | null,
 ): PlayGlass {
+  const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
   return async (spec, index, hooks) => {
     const before = current();
     const finished = play(spec, index, hooks);
-    while (current() === before || current()?.session.state !== 'ready') {
-      await new Promise((r) => setTimeout(r, 30));
-    }
-    const holdMs = holdMsForLevel(spec, spec.line + 0.01);
+    const holds = idealHolds(spec);
+    if (holds.length === 1) holds[0] = holdMsForLevel(spec, spec.line + 0.01);
     const pointer = { isPrimary: true, pointerId: 7, button: 0, pointerType: 'touch', bubbles: true };
-    canvas.dispatchEvent(new PointerEvent('pointerdown', pointer));
-    setTimeout(() => canvas.dispatchEvent(new PointerEvent('pointerup', pointer)), holdMs);
+    for (const holdMs of holds) {
+      while (current() === before || current()?.session.state !== 'ready') await sleep(30);
+      canvas.dispatchEvent(new PointerEvent('pointerdown', pointer));
+      await sleep(holdMs);
+      canvas.dispatchEvent(new PointerEvent('pointerup', pointer));
+      await sleep(60);
+    }
     return finished;
   };
 }

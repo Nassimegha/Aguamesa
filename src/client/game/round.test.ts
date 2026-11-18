@@ -26,7 +26,13 @@ function fakePlayer(log: string[] = []): PlayGlass {
   return async (_spec, index, hooks) => {
     log.push(`play ${index}`);
     hooks.onPourStart();
-    const outcome: PourOutcome = { holdMs: 1000 + index, level: 0.7, score: 90 + index, overflow: false };
+    const outcome: PourOutcome = {
+      holdMs: 1000 + index,
+      holds: [1000 + index],
+      level: 0.7,
+      score: 90 + index,
+      overflow: false,
+    };
     return outcome;
   };
 }
@@ -164,7 +170,7 @@ test('night/finish is only called after every pour reached the server', async ()
     pour: async (req) => {
       await new Promise((r) => setTimeout(r, 5 - req.glassIndex)); // answers in random-ish order
       order.push(`pour ${req.glassIndex}`);
-      return { score: 1, level: 0.5, overflow: false, crowdLine: 0.5, beatPercent: 0 };
+      return { score: 90 + req.glassIndex, level: 0.7, overflow: false, crowdLine: 0.5, beatPercent: 0 };
     },
     finishNight: async (dayId) => {
       order.push('finish');
@@ -183,7 +189,7 @@ test('a failing pour request is retried, then reported without blocking the nigh
     pour: async (req) => {
       calls++;
       if (req.glassIndex === 1) throw new Error('network down'); // glass 1 always fails
-      return { score: 1, level: 0.5, overflow: false, crowdLine: 0.5, beatPercent: 0 };
+      return { score: 90 + req.glassIndex, level: 0.7, overflow: false, crowdLine: 0.5, beatPercent: 0 };
     },
   });
   const { serverResults, summary } = await playNight({
@@ -206,6 +212,23 @@ test('if night/finish keeps failing, playNight rejects', async () => {
     },
   });
   await assert.rejects(playNight({ today, api, playGlass: fakePlayer(), wait: fakeWait() }), /server down/);
+});
+
+test('layered glasses send every press in `holds`; single-press glasses do not', async () => {
+  const sent: unknown[] = [];
+  const api = fakeApi({
+    pour: async (req) => {
+      sent.push(req);
+      return { score: 90 + req.glassIndex, level: 0.7, overflow: false, crowdLine: 0.5, beatPercent: 0 };
+    },
+  });
+  const layeredPlayer: PlayGlass = async (_spec, index) => {
+    const holds = index === 0 ? [400, 600] : [1000 + index];
+    return { holdMs: holds.reduce((a, b) => a + b, 0), holds, level: 0.7, score: 90 + index, overflow: false };
+  };
+  await playNight({ today, api, playGlass: layeredPlayer, wait: fakeWait() });
+  assert.deepEqual(sent[0], { dayId: '2026-11-24', glassIndex: 0, holdMs: 1000, holds: [400, 600] });
+  assert.deepEqual(sent[1], { dayId: '2026-11-24', glassIndex: 1, holdMs: 1001 });
 });
 
 // ------------------------------------------------------------------ withRetry

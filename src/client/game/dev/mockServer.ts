@@ -6,13 +6,13 @@
 //   - answers after a small fake network delay.
 // crowdLine / beatPercent are invented but deterministic until P3 has real ones.
 
-import type { DailyService, NightSummary, PlayerState, PourRequest, PourResult } from '../../../shared/types';
-import { pour } from '../../../shared/pour';
-import type { NightApi } from '../round';
+import type { DailyService, NightSummary, PlayerState, PourResult } from '../../../shared/types';
+import { pourSequence } from '../../../shared/pour';
+import type { NightApi, PourRequestWithHolds } from '../round';
 import { starsFor, type LevelApi } from '../levelPlayer';
 import { loadLevel } from '../levels';
 
-/** §10.1 example night. Twists are set to "none" until Task 4 implements them. */
+/** §10.1 example night, with its twists (customers mapped to the café's 3 characters). */
 export const MOCK_TODAY: DailyService = {
   dayId: '2026-11-24',
   night: 24,
@@ -20,9 +20,9 @@ export const MOCK_TODAY: DailyService = {
   glasses: [
     { model: 'mug_giant', line: 0.78, flow: 1.0, twist: 'none', customer: 'giant' },
     { model: 'thimble', line: 0.6, flow: 0.6, twist: 'none', customer: 'fairy' },
-    { model: 'goblet', line: 0.7, flow: 1.0, twist: 'none', customer: 'ghost' },
-    { model: 'tankard', line: 0.82, flow: 1.1, twist: 'none', customer: 'giant' },
-    { model: 'flute', line: 0.65, flow: 0.9, twist: 'none', customer: 'fairy' },
+    { model: 'goblet', line: 0.7, flow: 1.0, twist: 'steam', customer: 'ghost' },
+    { model: 'tankard', line: 0.82, flow: 1.1, twist: 'tilt', customer: 'giant' },
+    { model: 'flute', line: 0.65, flow: 0.9, twist: 'layers2', customer: 'fairy' },
   ],
 };
 
@@ -39,12 +39,14 @@ export function createMockServer(today: DailyService = MOCK_TODAY): NightApi & L
   };
 
   return {
-    async pour(request: PourRequest): Promise<PourResult> {
+    async pour(request: PourRequestWithHolds): Promise<PourResult> {
       await sleep(FAKE_LATENCY_MS);
       const spec = today.glasses[request.glassIndex];
       if (!spec || request.dayId !== today.dayId) throw new Error('400 bad request');
       if (scores[request.glassIndex] !== null) throw new Error('409 glass already played today');
-      const result = pour(spec, request.holdMs);
+      // How the real server should score (proposal): every press for layers, else holdMs.
+      const detail = pourSequence(spec, request.holds ?? [request.holdMs]);
+      const result = { level: Math.min(detail.level, 1), score: detail.score, overflow: detail.overflow };
       scores[request.glassIndex] = result.score;
       player.playedToday[request.glassIndex] = true;
       // Pretend the crowd stops a bit below the line, and beat% follows the score.

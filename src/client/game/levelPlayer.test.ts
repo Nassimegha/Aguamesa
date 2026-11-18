@@ -33,7 +33,7 @@ function playerWithOffset(offset: number): PlayGlass {
   return async (spec, _i, hooks) => {
     hooks.onPourStart();
     const holdMs = Math.round(holdMsForLevel(spec, spec.line + offset));
-    return { holdMs, ...pour(spec, holdMs) };
+    return { holdMs, holds: [holdMs], ...pour(spec, holdMs) };
   };
 }
 

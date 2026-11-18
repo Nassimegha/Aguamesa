@@ -48,9 +48,16 @@ export interface NightEvents extends RoundEvents {
   onError?(error: unknown): void;
 }
 
+/**
+ * PourRequest (00 §6.1) plus `holds`, sent only for layers2/3 glasses (one press per line).
+ * PROPOSAL for P3: the contract has a single holdMs, which is not enough to score layers
+ * on the server. Until the contract is updated, holdMs = the sum of the presses.
+ */
+export type PourRequestWithHolds = PourRequest & { holds?: number[] };
+
 /** The two endpoints a night needs. P3's `api` (src/client/api.ts) fits this shape as-is. */
 export interface NightApi {
-  pour(request: PourRequest): Promise<PourResult>;
+  pour(request: PourRequestWithHolds): Promise<PourResult>;
   finishNight(dayId: string): Promise<NightSummary>;
 }
 
@@ -153,7 +160,8 @@ export async function playNight(options: NightOptions): Promise<NightResult> {
     ...(options.pauseMs !== undefined ? { pauseMs: options.pauseMs } : {}),
     afterPour(index, outcome) {
       // Sent in the background: the next glass does not wait for it.
-      const request: PourRequest = { dayId: today.dayId, glassIndex: index, holdMs: outcome.holdMs };
+      const request: PourRequestWithHolds = { dayId: today.dayId, glassIndex: index, holdMs: outcome.holdMs };
+      if (outcome.holds.length > 1) request.holds = outcome.holds;
       pending.push(
         withRetry(() => api.pour(request), wait).then(
           (result) => {

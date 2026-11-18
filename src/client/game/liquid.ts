@@ -9,6 +9,8 @@
 //   4. The surface height gets a small sine wave while pouring, which fades out after,
 //      so at rest the surface is EXACTLY at the level computed by pour.ts.
 //   5. A thin stream falls from above while the finger is down, then a few drops.
+//   6. Twists: an optional foam band on top (foam), and up to 3 coloured layers (layers2/3).
+//      The surface stays horizontal in the world, so a tilted glass looks right for free.
 //
 // Everything is driven from outside: call setLevel() / setPouring() and update(dt) each frame.
 
@@ -27,6 +29,9 @@ export interface LiquidColors {
 /** Default: warm amber, like the placeholder in P2's glasses. */
 export const AMBER: LiquidColors = { deep: 0x9a4a08, body: 0xe9a11f, surface: 0xffe3a3 };
 
+/** Layer colours for layers2 / layers3, bottom to top (grenadine, orange, lemon). */
+export const LAYER_COLORS: readonly THREE.ColorRepresentation[] = [0xb3122e, 0xf07a14, 0xf5d547];
+
 export interface Liquid {
   /** The last level given to setLevel(). */
   readonly level: number;
@@ -34,8 +39,13 @@ export interface Liquid {
   setLevel(level: number): void;
   /** Stream on while the finger is down; turning it off releases the last drops. */
   setPouring(pouring: boolean): void;
-  /** Tilts the surface (for the tilt twist later): slope in x and z, in level units per metre. */
-  setTilt(slopeX: number, slopeZ: number): void;
+  /** Foam thickness on top of the liquid, in level units (0 = no foam). Included in setLevel's level. */
+  setFoam(thickness: number): void;
+  /**
+   * Coloured layers (layers twist): `tops` = the levels where each lower layer ends,
+   * `colors` = one colour per layer (tops.length + 1, max 3). Empty arrays = one plain liquid.
+   */
+  setLayers(tops: readonly number[], colors: readonly THREE.ColorRepresentation[]): void;
   setColors(colors: LiquidColors): void;
   /** Call every frame with the frame time in seconds. */
   update(deltaSeconds: number): void;
@@ -53,6 +63,8 @@ const DROP_COUNT = 3;
 const DROP_RADIUS = 0.0028;
 const DROP_INTERVAL = 0.05; // seconds between two drops
 const GRAVITY = 9.81;
+const FOAM_COLOR = 0xfff6e0;
+const NO_LAYER_Y = 1e6; // "above everything": a layer boundary that is never reached
 
 const vertexShader = /* glsl */ `
   varying vec3 vWorldPos;
@@ -66,41 +78,60 @@ const vertexShader = /* glsl */ `
 `;
 
 const fragmentShader = /* glsl */ `
-  uniform float uSurfaceY;   // world height of the calm surface
+  uniform float uSurfaceY;   // world height of the calm surface (top of the foam if any)
   uniform float uBottomY;    // world height of level 0
+  uniform float uFoamY;      // world height where the foam starts (= uSurfaceY when no foam)
   uniform vec2  uCenter;     // world x/z of the glass axis
-  uniform vec2  uTilt;       // surface slope (x, z)
   uniform float uWave;       // ripple height in metres
   uniform float uTime;
   uniform vec3  uDeep;
   uniform vec3  uBody;
   uniform vec3  uSurface;
+  uniform vec3  uFoam;
+  uniform float uLayered;    // 1 when layers are used
+  uniform float uLayerTop0;  // world height where layer 0 ends
+  uniform float uLayerTop1;  // world height where layer 1 ends
+  uniform vec3  uLayer0;
+  uniform vec3  uLayer1;
+  uniform vec3  uLayer2;
   varying vec3 vWorldPos;
   varying vec3 vWorldNormal;
 
   float surfaceHeight(vec2 xz) {
     vec2 p = xz - uCenter;
     float ripple = sin(p.x * 95.0 + uTime * 7.0) * 0.6 + sin(p.y * 80.0 - uTime * 5.3) * 0.4;
-    return uSurfaceY + dot(uTilt, p) + ripple * uWave;
+    return uSurfaceY + ripple * uWave;
+  }
+
+  vec3 bodyColor(float y, float s) {
+    float h = clamp((y - uBottomY) / max(s - uBottomY, 1e-4), 0.0, 1.0);
+    if (uLayered < 0.5) return mix(uDeep, uBody, h);
+    vec3 c = y < uLayerTop0 ? uLayer0 : (y < uLayerTop1 ? uLayer1 : uLayer2);
+    return c * mix(0.78, 1.0, h);
   }
 
   void main() {
     float s = surfaceHeight(vWorldPos.xz);
     if (vWorldPos.y > s) discard;
+    bool hasFoam = uFoamY < uSurfaceY - 1e-5;
+    bool inFoam = hasFoam && vWorldPos.y > uFoamY + (s - uSurfaceY);
 
     vec3 color;
     if (!gl_FrontFacing) {
-      // Seen through the cut: this is the top of the liquid.
-      color = uSurface;
+      // Seen through the cut: this is the top of the liquid (or of the foam).
+      color = hasFoam ? uFoam : (uLayered > 0.5 ? mix(bodyColor(uSurfaceY, uSurfaceY), uSurface, 0.45) : uSurface);
+    } else if (inFoam) {
+      // Little bubbles: a cheap pattern from two sines.
+      float bubbles = sin(vWorldPos.x * 900.0) * sin(vWorldPos.y * 800.0 + uTime * 2.0);
+      color = uFoam * (0.92 + 0.08 * bubbles);
     } else {
-      float h = clamp((vWorldPos.y - uBottomY) / max(s - uBottomY, 1e-4), 0.0, 1.0);
-      color = mix(uDeep, uBody, h);
+      color = bodyColor(vWorldPos.y, s);
       // Soft rim light on the edges, so the liquid looks round.
       vec3 viewDir = normalize(cameraPosition - vWorldPos);
       float rim = pow(1.0 - abs(dot(normalize(vWorldNormal), viewDir)), 2.0);
       color += rim * 0.22;
       // Bright meniscus band just under the surface: makes the level easy to read.
-      color = mix(color, uSurface, smoothstep(s - 0.0035, s, vWorldPos.y) * 0.65);
+      if (!hasFoam) color = mix(color, uSurface, smoothstep(s - 0.0035, s, vWorldPos.y) * 0.65);
     }
     gl_FragColor = vec4(color, 1.0);
     #include <colorspace_fragment>
@@ -114,13 +145,20 @@ export function createLiquid(glass: Glass, colors: LiquidColors = AMBER): Liquid
   const uniforms = {
     uSurfaceY: { value: 0 },
     uBottomY: { value: 0 },
+    uFoamY: { value: 0 },
     uCenter: { value: new THREE.Vector2() },
-    uTilt: { value: new THREE.Vector2() },
     uWave: { value: 0 },
     uTime: { value: 0 },
     uDeep: { value: new THREE.Color() },
     uBody: { value: new THREE.Color() },
     uSurface: { value: new THREE.Color() },
+    uFoam: { value: new THREE.Color(FOAM_COLOR) },
+    uLayered: { value: 0 },
+    uLayerTop0: { value: NO_LAYER_Y },
+    uLayerTop1: { value: NO_LAYER_Y },
+    uLayer0: { value: new THREE.Color() },
+    uLayer1: { value: new THREE.Color() },
+    uLayer2: { value: new THREE.Color() },
   };
   const material = new THREE.ShaderMaterial({
     uniforms,
@@ -155,12 +193,18 @@ export function createLiquid(glass: Glass, colors: LiquidColors = AMBER): Liquid
   const streamStartY = topY + STREAM_HEIGHT;
 
   let level = 0;
+  let foam = 0;
+  let layerTops: number[] = [];
   let pouring = false;
   let wave = 0;
   let streamThickness = 0; // 0..1
   let time = 0;
-  const tilt = new THREE.Vector2();
   const worldPoint = new THREE.Vector3();
+
+  /** World height of a level, following the glass wherever it is (moved, tilted, spun). */
+  function worldY(levelValue: number): number {
+    return glass.root.localToWorld(worldPoint.set(0, glass.levelToLocalY(levelValue), 0)).y;
+  }
 
   function setColors(c: LiquidColors): void {
     uniforms.uDeep.value.set(c.deep);
@@ -169,6 +213,16 @@ export function createLiquid(glass: Glass, colors: LiquidColors = AMBER): Liquid
     streamMaterial.color.set(c.body);
   }
   setColors(colors);
+
+  function setLayers(tops: readonly number[], layerColors: readonly THREE.ColorRepresentation[]): void {
+    layerTops = tops.slice(0, 2);
+    uniforms.uLayered.value = layerTops.length > 0 ? 1 : 0;
+    const pick = (i: number): THREE.ColorRepresentation =>
+      layerColors[Math.min(i, layerColors.length - 1)] ?? colors.body;
+    uniforms.uLayer0.value.set(pick(0));
+    uniforms.uLayer1.value.set(pick(1));
+    uniforms.uLayer2.value.set(pick(layerTops.length >= 2 ? 2 : 1));
+  }
 
   function startDrops(): void {
     drops.forEach((drop, i) => {
@@ -200,10 +254,11 @@ export function createLiquid(glass: Glass, colors: LiquidColors = AMBER): Liquid
     glass.root.localToWorld(worldPoint.set(0, surfaceLocalY, 0));
     uniforms.uSurfaceY.value = worldPoint.y;
     uniforms.uCenter.value.set(worldPoint.x, worldPoint.z);
-    glass.root.localToWorld(worldPoint.set(0, glass.levelToLocalY(0), 0));
-    uniforms.uBottomY.value = worldPoint.y;
+    uniforms.uBottomY.value = worldY(0);
+    uniforms.uFoamY.value = foam > 0 ? worldY(Math.max(0, shown - foam)) : uniforms.uSurfaceY.value;
+    uniforms.uLayerTop0.value = layerTops[0] !== undefined ? worldY(layerTops[0]) : NO_LAYER_Y;
+    uniforms.uLayerTop1.value = layerTops[1] !== undefined ? worldY(layerTops[1]) : NO_LAYER_Y;
     uniforms.uWave.value = WAVE_MAX * wave * rootScale;
-    uniforms.uTilt.value.copy(tilt).multiplyScalar(glass.levelToLocalY(1) - glass.levelToLocalY(0));
     uniforms.uTime.value = time;
 
     mesh.visible = level > 0;
@@ -214,6 +269,8 @@ export function createLiquid(glass: Glass, colors: LiquidColors = AMBER): Liquid
       const r = STREAM_RADIUS * streamThickness * (1 + Math.sin(time * 40) * 0.08);
       stream.position.set(0, streamStartY, 0);
       stream.scale.set(r, streamStartY - surfaceLocalY, r);
+      // Liquid falls straight down even when the glass tilts or spins: cancel the glass rotation.
+      glass.root.getWorldQuaternion(stream.quaternion).invert();
     }
 
     // Falling drops after release: simple gravity, they vanish when they hit the surface.
@@ -244,9 +301,10 @@ export function createLiquid(glass: Glass, colors: LiquidColors = AMBER): Liquid
       if (pouring && !value) startDrops();
       pouring = value;
     },
-    setTilt(slopeX: number, slopeZ: number) {
-      tilt.set(slopeX, slopeZ);
+    setFoam(thickness: number) {
+      foam = Math.max(0, thickness);
     },
+    setLayers,
     setColors,
     update,
     dispose() {
