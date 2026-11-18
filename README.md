@@ -15,3 +15,15 @@ Commence ici : **[docs/team/README.md](docs/team/README.md)**. Tu y trouveras la
 | `src/server/`, `src/shared/types.ts`, `content/`, `devvit.json` | P3 : Reddit et serveur |
 
 Le document complet du jeu est dans [docs/last-drop-projet.md](docs/last-drop-projet.md).
+
+## Lancer le projet
+
+Il faut **Node.js 24 ou plus récent** ([nodejs.org](https://nodejs.org), ou `winget install OpenJS.NodeJS.LTS` sur Windows).
+
+```bash
+npm install          # installe les dépendances
+npm run dev:local    # ouvre le client dans Vite, sans Reddit
+npm run test         # lance les tests (src/**/*.test.ts), dont la formule du versement
+```
+
+La formule du versement est dans [src/shared/pour.ts](src/shared/pour.ts) : `pour(spec, holdMs)` renvoie `{ level, score, overflow }`. Le client et le serveur utilisent la même fonction (contrat §7).
