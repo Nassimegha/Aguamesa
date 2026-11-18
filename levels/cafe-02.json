@@ -1,0 +1,11 @@
+{
+  "id": "cafe-02",
+  "location": "cafe",
+  "glasses": [
+    { "model": "pint",    "line": 0.80, "flow": 0.9, "twist": "none", "customer": "ghost" },
+    { "model": "teacup",  "line": 0.65, "flow": 0.9, "twist": "none", "customer": "fairy" },
+    { "model": "tankard", "line": 0.60, "flow": 1.0, "twist": "none", "customer": "giant" },
+    { "model": "pint",    "line": 0.85, "flow": 1.0, "twist": "none", "customer": "fairy" }
+  ],
+  "stars": [200, 280, 340]
+}
