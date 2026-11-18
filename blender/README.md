@@ -64,3 +64,14 @@ Puis copie `loc_cafe.glb` dans `../assets/models/`.
 **Astuce pour régler la caméra sans deviner à l'aveugle :** `src/client/main.ts` (temporaire) a un mode `?debug=1` dans l'URL qui place une caméra large et fixe pour voir tout le décor d'un coup, avant de choisir les bonnes valeurs de `CAMERA_POS`/`CAMERA_TARGET` à mettre dans le script Blender.
 
 **Piège Blender :** `primitive_cube_add(size=1)` crée un cube d'arête 1. Pour une boîte de taille `(sx, sy, sz)`, le `obj.scale` doit être `(sx, sy, sz)` **directement**, pas divisé par 2 — sinon tout fait la moitié de la taille prévue (vécu sur ce fichier).
+
+## Les 8 verres (Tâche 3)
+
+- `build_glasses.py` construit les 7 verres restants (`mug_giant`, `thimble`, `flute`, `coconut`, `teacup`, `goblet`, `tankard`), sur le même principe que `build_glass_pint.py` : un profil de révolution (liste de `(rayon, z)`), lofté en mesh, plus les 3 marqueurs du contrat §6.3.
+- Même pipeline de compression (`weld` + `meshopt`, jamais `optimize`).
+
+## Les clients animés (char_<id>.glb, Tâche 3)
+
+- `build_customers_cafe.py` construit les 3 clients du Café (`giant`, `fairy`, `ghost`). Chacun a 4 animations nommées **exactement** `idle`, `happy`, `meh`, `splashed` (contrat §6.3), lues par `src/client/world/customers.ts`.
+- **Piège animation (le plus sournois) :** si tu assignes juste `obj.animation_data.action = ...` plusieurs fois de suite pour créer plusieurs animations, Blender **n'exporte que la dernière** — les autres actions sont silencieusement perdues à l'export, même avec `use_fake_user = True`. Il faut empiler chaque action sur sa propre piste NLA (`animation_data.nla_tracks.new()` + `track.strips.new(name, frame_debut, action)`, puis remettre `animation_data.action = None`), et exporter avec `export_animation_mode='NLA_TRACKS'`. `check_animations.mjs fichier.glb` vérifie les noms des animations après export/compression.
+- **Piège Three.js (deuxième sournoiserie) :** `GLTFLoader` renvoie les animations dans `gltf.animations`, **pas** dans `gltf.scene.animations`. Si `scene.ts` ne garde que `gltf.scene`, les animations sont perdues avant même d'arriver à `customers.ts`. Il faut recopier `gltf.scene.animations = gltf.animations` avant de renvoyer la scène (déjà fait dans `scene.ts`).
