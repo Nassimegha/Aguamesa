@@ -12,6 +12,7 @@ import { showHome } from './ui/home';
 import { showNightResult } from './ui/nightResult';
 import { showLeaderboard } from './ui/leaderboard';
 import { showShelf } from './ui/shelf';
+import { streakLine } from './ui/streak';
 import type { Screen } from './ui/screen';
 import { createGlassStage } from './game/glassStage';
 import { playNight } from './game/round';
@@ -48,6 +49,7 @@ const game = createScene(canvas);
 game.start();
 
 let activeScreen: Screen | null = null;
+let currentStreak = 0;
 function closeScreen(): void {
   activeScreen?.unmount();
   activeScreen = null;
@@ -100,14 +102,42 @@ async function playTonight(today: DailyService, visitLocation?: string): Promise
     sound,
   });
 
-  // Le barista, derrière la machine à gauche : il reste toute la nuit et réagit aussi.
-  let barista: Customer | null = null;
-  spawnCustomer(game, 'barista', CUSTOMER_SPOT.barista.clone())
-    .then((b) => {
-      barista = b;
-      if (b.root.parent) b.root.parent.rotation.y = 0.5; // le support, pas le nœud animé
-    })
-    .catch((err: unknown) => console.error('barista:', err));
+  // L'ardoise du café : plats du jour + série (00 §1, « traits à la craie »).
+  loc.setChalkboard({
+    night: today.night,
+    streak: currentStreak,
+    specials: [today.drinkOfTheDay ?? 'Moonlight Latte', 'Giant Mug Stout', 'Fairy Fizz', 'Ghost Chai'],
+  });
+  // Bulle du client au-dessus de sa tête (UI_DIALOGUE_ANCHOR), le temps d'un verre.
+  const bubble = document.createElement('div');
+  bubble.className = 'speech-bubble';
+  document.body.appendChild(bubble);
+  let bubbleUntil = 0;
+  let clock = 0;
+  const say = (text: string, seconds = 3.2): void => {
+    bubble.textContent = text;
+    bubbleUntil = clock + seconds;
+  };
+  const stopBubble = game.onTick((dt) => {
+    clock += dt;
+    const a = loc.dialogueAnchor;
+    const show = !!a && clock < bubbleUntil;
+    bubble.classList.toggle('speech-bubble--on', show);
+    if (!a || !show) return;
+    const p = a.getWorldPosition(new THREE.Vector3()).project(game.camera);
+    const r = canvas.getBoundingClientRect();
+    const x = THREE.MathUtils.clamp(r.left + (p.x * 0.5 + 0.5) * r.width, 90, innerWidth - 90);
+    const y = Math.max(r.top + (-p.y * 0.5 + 0.5) * r.height, 70);
+    bubble.style.transform = `translate(${x}px, ${y}px) translate(-50%, -100%)`;
+  });
+  const GREETINGS: Record<string, string> = {
+    giant: 'The biggest mug you have, please!',
+    fairy: 'Just a tiny drop… exactly to the line!',
+    ghost: 'Boo… I mean, hello. Something warm?',
+    pirate: 'Fill her up, matey. No spillin\'!',
+    wizard: 'Pour wisely, young barista.',
+  };
+  let firstGreeting = true;
 
   let activeCustomer: Customer | null = null;
   // Un client se charge en différé : s'il arrive après le verre suivant (ou la fin de
@@ -124,6 +154,9 @@ async function playTonight(today: DailyService, visitLocation?: string): Promise
         activeCustomer?.dispose();
         activeCustomer = null;
         const id = spec.customer as CustomerId;
+        const streakTalk = firstGreeting ? streakLine(currentStreak) : null;
+        firstGreeting = false;
+        say(streakTalk ?? GREETINGS[spec.customer] ?? 'Evening! What are you pouring tonight?');
         if (!KNOWN_CUSTOMERS.has(id)) {
           console.warn(`[aguamesa] client "${spec.customer}" pas encore construit, verre sans client`);
           return;
@@ -137,7 +170,7 @@ async function playTonight(today: DailyService, visitLocation?: string): Promise
       },
       onPourEnd: (_index, outcome) => {
         activeCustomer?.reactTo(outcome);
-        barista?.reactTo(outcome);
+        say(outcome.overflow ? 'Whoa! My shirt!' : outcome.score >= 95 ? 'Perfect. Just perfect!' : outcome.score >= 70 ? 'Not bad at all.' : 'Hmm… close enough?', 2.2);
       },
       onServerResult: (index, result) => stage.showCrowd(index, result),
       onGlassSkipped: (index) => console.log(`[aguamesa] verre ${index + 1} deja joue aujourd'hui`),
@@ -146,8 +179,8 @@ async function playTonight(today: DailyService, visitLocation?: string): Promise
         customerToken++;
         activeCustomer?.dispose();
         activeCustomer = null;
-        barista?.dispose();
-        barista = null;
+        stopBubble();
+        bubble.remove();
         stage.clear();
         sound.dispose();
         loc.dispose();
@@ -169,6 +202,7 @@ async function playTonight(today: DailyService, visitLocation?: string): Promise
 async function boot(): Promise<void> {
   closeScreen();
   const { player, today } = await gameApi.init();
+  currentStreak = player.streak;
   console.log(`[aguamesa] nuit #${today.night} (${today.dayId}), lieu ${today.location}, streak 🔥${player.streak}`);
 
   activeScreen = showHome(player, {
