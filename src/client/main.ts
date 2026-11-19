@@ -3,7 +3,6 @@
 // Sert a verifier les Taches 1, 2 et 3 (scene.ts, les 8 verres, loc_cafe.glb,
 // les 3 clients animes) avant que le serveur Devvit existe.
 import * as THREE from 'three';
-import './ui/styles.css';
 import { createScene } from './world/scene';
 import { loadLocation } from './world/location';
 import { spawnCustomer, type CustomerId } from './world/customers';
@@ -57,12 +56,15 @@ async function checkAllGlasses(): Promise<void> {
   game.camera.lookAt(0, 0.08, 0);
 }
 
+const CUSTOMER_SETS: Record<string, CustomerId[]> = {
+  cafe: ['giant', 'fairy', 'ghost'],
+  beach: ['surfer', 'crab_mister', 'mermaid'],
+  chalet: ['yeti', 'skier', 'grandma_bear'],
+};
+
 async function checkCustomers(): Promise<void> {
-  const ids = (new URLSearchParams(window.location.search).get('set') === 'chalet'
-    ? ['yeti', 'skier', 'grandma_bear']
-    : new URLSearchParams(window.location.search).get('set') === 'beach'
-      ? ['surfer', 'crab_mister', 'mermaid']
-      : ['giant', 'fairy', 'ghost']) as const;
+  const set = new URLSearchParams(window.location.search).get('set') ?? 'cafe';
+  const ids = CUSTOMER_SETS[set] ?? CUSTOMER_SETS['cafe']!;
   const spacing = 0.7;
   const startX = -((ids.length - 1) * spacing) / 2;
   const cycle: Array<'idle' | 'happy' | 'meh' | 'splashed'> = ['idle', 'happy', 'meh', 'splashed'];

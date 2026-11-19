@@ -1,6 +1,6 @@
 {
   "$schema": "https://developers.reddit.com/schema/config-file.v1.json",
-  "name": "aguamesa",
+  "name": "aguamesa0test",
   "post": {
     "dir": "dist/client",
     "entrypoints": {
@@ -46,6 +46,6 @@
     "dev": "vite build --watch"
   },
   "dev": {
-    "subreddit": "aguamesa_dev"
+    "subreddit": "aguamesa_test_nassime"
   }
 }
