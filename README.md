@@ -15,3 +15,12 @@ Commence ici : **[docs/team/README.md](docs/team/README.md)**. Tu y trouveras la
 | `src/server/`, `src/shared/types.ts`, `content/`, `devvit.json` | P3 : Reddit et serveur |
 
 Le document complet du jeu est dans [docs/last-drop-projet.md](docs/last-drop-projet.md).
+
+## Commandes
+
+- `npm run dev` : lance un serveur de développement live sur Reddit (vrai Devvit, demande une connexion Reddit).
+- `npm run dev:local` : lance juste Vite en local, sans Reddit, avec le faux `/api` (`mockApi.ts`) — pratique pour avancer vite sans attendre la connexion.
+- `npm run build` : build client + serveur.
+- `npm run login` : connecte la CLI à ton compte Reddit.
+- `npm run test:types` : vérifie les types TypeScript sur tout le projet.
+- `npm run deploy` / `npm run launch` : publication (voir avec P3 avant d'y toucher).

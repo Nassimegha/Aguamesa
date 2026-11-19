@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite';
+import { devvit } from '@devvit/start/vite';
 
 export default defineConfig({
-  root: '.',
-  server: { port: 5173 },
+  plugins: [devvit()],
 });
