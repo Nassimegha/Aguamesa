@@ -326,6 +326,32 @@
   width: 100%;
 }
 
+.night-result__more {
+  width: 100%;
+  margin-top: 10px;
+  background: var(--teal);
+  color: #fff;
+}
+
+.night-result__hint {
+  margin-top: 8px;
+  font-size: 12px;
+  opacity: 0.7;
+  line-height: 1.4;
+}
+
+.practice-badge {
+  display: inline-block;
+  margin-bottom: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--teal);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
 /* --- leaderboard.ts --- */
 .leaderboard__tabs {
   display: flex;
@@ -527,6 +553,17 @@
   z-index: 2;
 }
 
+/* Lieu 6 : la vraie nuit (Tonight's Shift), mise en avant sur la carte */
+.map-pin--real .map-pin__badge {
+  border-width: 3px;
+  box-shadow: 0 0 0 3px rgba(224, 169, 60, 0.55), 0 6px 16px rgba(0, 0, 0, 0.45);
+}
+
+.map-pin--real .map-pin__name small {
+  color: var(--accent-dark);
+  opacity: 1;
+}
+
 .tod-toggle {
   position: fixed;
   top: max(16px, env(safe-area-inset-top));
@@ -559,11 +596,34 @@
   font-size: 20px;
 }
 
-/* --- home: Levels --- */
+/* --- home: Free Play, Levels --- */
+.home__caption {
+  margin: -10px 0 16px;
+  color: var(--chalk);
+  opacity: 0.8;
+  font-size: 12px;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.home__free {
+  width: 100%;
+  min-height: 52px;
+  margin-bottom: 10px;
+  background: var(--teal);
+  color: #fff;
+}
+
+.home__free span {
+  font-weight: 600;
+  font-size: 13px;
+  opacity: 0.9;
+}
+
 .home__levels {
   width: 100%;
   min-height: 52px;
-  margin: -8px 0 16px;
+  margin: 0 0 16px;
   background: var(--gold);
   color: var(--ink);
 }
@@ -1023,6 +1083,19 @@
 .visit__play {
   min-height: 52px;
   font-size: 17px;
+}
+
+.visit__free {
+  background: var(--teal);
+  color: #fff;
+}
+
+.visit__note {
+  margin-top: -2px;
+  font-size: 11px;
+  text-align: center;
+  opacity: 0.7;
+  line-height: 1.35;
 }
 
 .visit__levels {

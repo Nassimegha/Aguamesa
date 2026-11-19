@@ -16,6 +16,10 @@ export interface VisitInfo {
   customers: VisitCustomer[];
   hasLevels: boolean;
   shiftLabel: string;
+  /** One line under the play button: what this mode counts for. */
+  shiftNote?: string;
+  /** Location 6 hosts the real shift: its play button looks different. */
+  real?: boolean;
 }
 
 export interface VisitActions {
@@ -65,7 +69,8 @@ export function showVisitPanel(info: VisitInfo, actions: VisitActions): VisitPan
       </div>`
           : ''
       }
-      <button class="btn btn--primary visit__play" data-play>${esc(info.shiftLabel)}</button>
+      <button class="btn ${info.real ? 'btn--primary' : 'visit__free'} visit__play" data-play>${esc(info.shiftLabel)}</button>
+      ${info.shiftNote ? `<div class="visit__note">${esc(info.shiftNote)}</div>` : ''}
       ${info.hasLevels ? '<button class="btn visit__levels" data-levels>⭐ Levels here</button>' : ''}
     </div>`;
   document.body.appendChild(el);

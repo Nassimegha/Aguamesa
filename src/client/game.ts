@@ -15,16 +15,16 @@ import { spawnCustomer, type Customer, type PourOutcome } from './world/customer
 import { pickCustomers, rosterFor, spotFor, type CustomerInfo } from './world/roster';
 import { loadMap } from './world/map';
 import { showHome } from './ui/home';
-import { showNightResult } from './ui/nightResult';
+import { showNightResult, showPracticeResult } from './ui/nightResult';
 import { showLeaderboard } from './ui/leaderboard';
 import { showShelf } from './ui/shelf';
 import { streakLine } from './ui/streak';
 import { showLevelSelect, showLevelResult, type LevelCard } from './ui/levels';
 import { showVisitPanel } from './ui/visit';
-import { createHud, type Hud } from './ui/hud';
+import { createHud, tipFor, type Hud } from './ui/hud';
 import type { Screen } from './ui/screen';
 import { createGlassStage, type GlassStage } from './game/glassStage';
-import { playNight } from './game/round';
+import { playNight, playRound } from './game/round';
 import { playLevel } from './game/levelPlayer';
 import { levelIds, loadLevel } from './game/levels';
 import { createGameAudio } from './game/audio';
@@ -35,6 +35,15 @@ const gameApi: GameApi = isLocal ? mockApi : api;
 
 const LOCATIONS: readonly LocationId[] = ['cafe', 'beach', 'chalet', 'fair', 'pirate', 'castle'];
 const isLocation = (v: string | null | undefined): v is LocationId => !!v && (LOCATIONS as readonly string[]).includes(v);
+
+/**
+ * Lieu 6 de la carte : la VRAIE nuit (Tonight's Shift), celle des joueurs Reddit — 1 essai par
+ * nuit, score recalculé par le serveur, série 🔥, classement, partage.
+ * Lieux 1 à 5 : Free Play — parties illimitées (équipe, jury, entraînement), mêmes règles et
+ * même formule de score, sans rien envoyer au serveur. Changer de lieu « réel » = cette ligne.
+ */
+const REAL_SHIFT_LOCATION: LocationId = 'castle';
+const isRealShift = (l: LocationId): boolean => l === REAL_SHIFT_LOCATION;
 
 /** Names, one-line pitch (Visit mode) and the drinks on each location's chalkboard. */
 const LOCATION_INFO: Record<LocationId, { name: string; blurb: string; specials: string[] }> = {
@@ -248,10 +257,10 @@ async function openCafe(
 }
 
 // ---------------------------------------------------------------------------
-// Service du Jour
+// Service du Jour : la vraie nuit, toujours au lieu 6 (REAL_SHIFT_LOCATION).
 // ---------------------------------------------------------------------------
-async function playTonight(night: DailyService, where?: LocationId): Promise<void> {
-  const location: LocationId = where ?? (isLocation(night.location) ? night.location : 'cafe');
+async function playTonight(night: DailyService): Promise<void> {
+  const location = REAL_SHIFT_LOCATION;
   const s = await openCafe(location, `Night #${night.night}`, night.glasses, {
     chalkNight: night.night,
     tips: true,
@@ -283,10 +292,65 @@ async function playTonight(night: DailyService, where?: LocationId): Promise<voi
             closeScreen();
             void boot();
           },
+          // jamais bloqué jusqu'au lendemain : on continue en Free Play
+          onPlayMore: () => openMap(),
         });
       },
     },
   });
+}
+
+// ---------------------------------------------------------------------------
+// Free Play (lieux 1 à 5) : parties illimitées, pour l'équipe, le jury et l'entraînement.
+// Même jeu (5 verres, même geste, même formule de score pour.ts, clients au hasard), mais
+// rien n'est envoyé au serveur : pas de limite, et la série 🔥 / le classement restent justes.
+// ---------------------------------------------------------------------------
+function shuffle<T>(list: readonly T[]): T[] {
+  const out = [...list];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j]!, out[i]!];
+  }
+  return out;
+}
+
+/** 5 glasses drawn from the levels P1 designed for this place (all levels if it has none). */
+async function freePlayGlasses(location: LocationId, count = 5): Promise<GlassSpec[]> {
+  const from = levelIds(location).length > 0 ? [location] : LEVEL_LOCATIONS;
+  const levels = await Promise.all(from.flatMap((l) => levelIds(l)).map(getLevel));
+  const picked = shuffle(levels.flatMap((lv) => lv.glasses)).slice(0, count);
+  // the first glass without a twist, to warm up; the twisted ones come after
+  return [...picked.filter((g) => g.twist === 'none'), ...picked.filter((g) => g.twist !== 'none')];
+}
+
+async function playFreePlay(location: LocationId): Promise<void> {
+  const info = LOCATION_INFO[location];
+  const glasses = await freePlayGlasses(location);
+  const s = await openCafe(location, `${info.name} · Free Play`, glasses, {
+    chalkNight: today?.night ?? 1,
+    tips: false,
+  });
+  const outcomes = await playRound({
+    glasses,
+    playGlass: s.stage.playGlass,
+    events: { onGlassStart: s.onGlassStart, onPourEnd: s.onPourEnd },
+  });
+  s.close();
+  const scores = outcomes.map((o) => o?.score ?? 0);
+  const total = scores.reduce((a, b) => a + b, 0);
+  const streak = player?.streak ?? 0;
+  closeScreen();
+  activeScreen = showPracticeResult(
+    { place: info.name, scores, total, tips: tipFor(total, streak), streak, realPlace: LOCATION_INFO[REAL_SHIFT_LOCATION].name },
+    {
+      onReplay: () => {
+        closeScreen();
+        void fadeOut().then(() => playFreePlay(location).catch((err: unknown) => console.error('[aguamesa] free play:', err)));
+      },
+      onMap: () => openMap(),
+      onHome: () => void boot(),
+    },
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -440,13 +504,26 @@ async function visitLocation(id: LocationId): Promise<void> {
     loc.dispose();
   };
 
+  const real = isRealShift(id);
   const panel = showVisitPanel(
     {
       name: info.name,
       blurb: info.blurb,
       customers: cast.map((c) => ({ id: c.id, name: c.name, line: c.line })),
       hasLevels: levelIds(id).length > 0,
-      shiftLabel: allPlayed ? "▶ See Tonight's Results" : played.some(Boolean) ? "▶ Finish Tonight's Shift" : "▶ Play Tonight's Shift Here",
+      real,
+      shiftLabel: real
+        ? allPlayed
+          ? "▶ See Tonight's Results"
+          : played.some(Boolean)
+            ? "▶ Finish Tonight's Shift"
+            : "▶ Play Tonight's Shift"
+        : '▶ Free Play here',
+      shiftNote: real
+        ? 'The real game: 1 try per night, scored by the server, grows your 🔥 streak and counts for the leaderboard.'
+        : `Unlimited replays, same rules. Doesn't change your 🔥 streak or the leaderboard (that's Tonight's Shift at the ${
+            LOCATION_INFO[REAL_SHIFT_LOCATION].name
+          }).`,
     },
     {
       onCustomer: (i) => {
@@ -463,10 +540,10 @@ async function visitLocation(id: LocationId): Promise<void> {
       },
       onPlayShift: () => {
         const night = today;
-        if (!night) return;
         void fadeOut().then(() => {
           leave();
-          playTonight(night, id).catch((err: unknown) => console.error('[aguamesa] playTonight:', err));
+          if (real && night) playTonight(night).catch((err: unknown) => console.error('[aguamesa] playTonight:', err));
+          else playFreePlay(id).catch((err: unknown) => console.error('[aguamesa] free play:', err));
         });
       },
       onLevels: () => {
@@ -497,9 +574,17 @@ function openMap(): void {
     backBtn?.remove();
     await visitLocation(id);
   };
-  void loadMap(game, new Set<LocationId>(LOCATIONS), (id) => {
-    enter(id).catch((err: unknown) => console.error('[aguamesa] enter:', err));
-  }).then((map) => {
+  const tags = Object.fromEntries(
+    LOCATIONS.map((l) => [l, isRealShift(l) ? { label: "🔥 Tonight's Shift", real: true } : { label: 'Free play' }]),
+  );
+  void loadMap(
+    game,
+    new Set<LocationId>(LOCATIONS),
+    (id) => {
+      enter(id).catch((err: unknown) => console.error('[aguamesa] enter:', err));
+    },
+    tags,
+  ).then((map) => {
     mapRef = map;
     backBtn = document.createElement('button');
     backBtn.className = 'btn btn--icon btn--ghost';
@@ -562,7 +647,7 @@ async function boot(): Promise<void> {
       closeScreen();
       activeScreen = showShelf(me.collection, { onClose: () => void boot() });
     },
-  });
+  }, { shiftPlace: LOCATION_INFO[REAL_SHIFT_LOCATION].name });
 }
 
 boot().catch((err: unknown) => console.error('[aguamesa] boot:', err));

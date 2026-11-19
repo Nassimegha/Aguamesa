@@ -206,10 +206,14 @@ function makeBird(color: number, size: number): THREE.Group {
 
 const easeInOut = (t: number): number => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
+/** Small label under a pin's name ("Free play", "🔥 Tonight's Shift"); `real` highlights the pin. */
+export type MapPinTags = Partial<Record<LocationId, { label: string; real?: boolean }>>;
+
 export async function loadMap(
   game: GameScene,
   unlockedLocations: ReadonlySet<LocationId>,
   onEnter: (id: LocationId) => void,
+  tags: MapPinTags = {},
 ): Promise<GameMap> {
   const { scene, camera, renderer } = game;
   const mobile = matchMedia('(pointer:coarse)').matches || Math.min(innerWidth, innerHeight) < 600;
@@ -465,11 +469,14 @@ export async function loadMap(
     fog.visible = locked;
 
     const el = document.createElement('button');
-    el.className = `map-pin${locked ? ' map-pin--locked' : ''}`;
+    const tag = tags[info.key];
+    el.className = `map-pin${locked ? ' map-pin--locked' : ''}${tag?.real ? ' map-pin--real' : ''}`;
     if (!locked) el.style.setProperty('--c', LOC_COLORS[L.id - 1] ?? '#e0703c');
     el.innerHTML = locked
       ? `<span class="map-pin__badge"><span class="map-pin__num">🔒</span><span class="map-pin__name">${info.name}<small>Coming soon</small></span></span><span class="map-pin__stem"></span><span class="map-pin__dot"></span>`
-      : `<span class="map-pin__badge"><span class="map-pin__num">${L.id}</span><span class="map-pin__name" data-name>${info.name}</span></span><span class="map-pin__stem"></span><span class="map-pin__dot"></span>`;
+      : `<span class="map-pin__badge"><span class="map-pin__num">${L.id}</span><span class="map-pin__name" data-name>${info.name}${
+          tag ? `<small>${tag.label}</small>` : ''
+        }</span></span><span class="map-pin__stem"></span><span class="map-pin__dot"></span>`;
     el.disabled = locked;
     el.setAttribute('aria-label', info.name);
     overlay.appendChild(el);
@@ -501,17 +508,22 @@ export async function loadMap(
     }
     locations.push(loc);
   }
+  // La pastille choisie devient « Enter ▸ » ; on garde son contenu (nom + étiquette) pour le remettre.
+  let savedLabel = '';
   function select(loc: MapLocation | null): void {
     if (selected) {
       selected.el.classList.remove('map-pin--selected');
       const n = selected.el.querySelector('[data-name]');
-      if (n) n.textContent = LOCATION_IDS[selected.id]?.name ?? '';
+      if (n) n.innerHTML = savedLabel;
     }
     selected = loc;
     if (loc) {
       loc.el.classList.add('map-pin--selected');
       const n = loc.el.querySelector('[data-name]');
-      if (n) n.textContent = 'Enter ▸';
+      if (n) {
+        savedLabel = n.innerHTML;
+        n.textContent = 'Enter ▸';
+      }
     }
   }
   const first = locations[0];
@@ -960,6 +972,8 @@ export async function loadMap(
       const stem = s.L.el.querySelector<HTMLElement>('.map-pin__stem');
       if (stem) stem.style.height = `${16 + s.L.lift}px`;
       s.L.el.style.transform = `translate(${s.x}px, ${s.y}px) translate(-50%, -100%)`;
+      // la pastille la plus proche (plus bas à l'écran) passe devant : aucune tige ne barre un nom
+      s.L.el.style.zIndex = s.L === selected ? '10000' : String(Math.round(s.y));
     }
   });
 
