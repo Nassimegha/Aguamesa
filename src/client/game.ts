@@ -26,6 +26,20 @@ const KNOWN_CUSTOMERS: ReadonlySet<CustomerId> = new Set([
 ]);
 const KNOWN_LOCATIONS: ReadonlySet<string> = new Set(['cafe', 'beach', 'chalet']);
 
+// Où se tient chaque client : derrière le comptoir, de côté pour ne pas cacher le verre.
+// Les grands sont plus bas (debout derrière le bar), les petits posés sur le comptoir.
+const CUSTOMER_SPOT: Record<CustomerId, THREE.Vector3> = {
+  giant: new THREE.Vector3(0.32, -0.32, 0.7),
+  yeti: new THREE.Vector3(0.32, -0.34, 0.7),
+  grandma_bear: new THREE.Vector3(0.3, -0.22, 0.65),
+  ghost: new THREE.Vector3(0.28, -0.12, 0.6),
+  surfer: new THREE.Vector3(0.28, -0.12, 0.6),
+  mermaid: new THREE.Vector3(0.28, -0.1, 0.6),
+  fairy: new THREE.Vector3(0.2, 0, 0.02),
+  skier: new THREE.Vector3(0.2, 0, 0.02),
+  crab_mister: new THREE.Vector3(0.2, 0, 0.02),
+};
+
 const canvas = document.getElementById('bg') as HTMLCanvasElement;
 const game = createScene(canvas);
 game.start();
@@ -56,6 +70,9 @@ async function playTonight(today: DailyService): Promise<void> {
   });
 
   let activeCustomer: Customer | null = null;
+  // Un client se charge en différé : s'il arrive après le verre suivant (ou la fin de
+  // la nuit), on le jette au lieu de l'afficher en double.
+  let customerToken = 0;
 
   await playNight({
     today,
@@ -63,6 +80,7 @@ async function playTonight(today: DailyService): Promise<void> {
     playGlass: stage.playGlass,
     events: {
       onGlassStart: (_index, spec) => {
+        const token = ++customerToken;
         activeCustomer?.dispose();
         activeCustomer = null;
         const id = spec.customer as CustomerId;
@@ -70,9 +88,10 @@ async function playTonight(today: DailyService): Promise<void> {
           console.warn(`[aguamesa] client "${spec.customer}" pas encore construit, verre sans client`);
           return;
         }
-        spawnCustomer(game, id, new THREE.Vector3(0.35, 0, 0.35))
+        spawnCustomer(game, id, CUSTOMER_SPOT[id].clone())
           .then((c) => {
-            activeCustomer = c;
+            if (token !== customerToken) c.dispose();
+            else activeCustomer = c;
           })
           .catch((err: unknown) => console.error('spawnCustomer:', err));
       },
@@ -81,10 +100,12 @@ async function playTonight(today: DailyService): Promise<void> {
       onGlassSkipped: (index) => console.log(`[aguamesa] verre ${index + 1} deja joue aujourd'hui`),
       onError: (err) => console.error('[aguamesa] nuit:', err),
       onNightEnd: (summary) => {
+        customerToken++;
         activeCustomer?.dispose();
         activeCustomer = null;
         stage.clear();
         sound.dispose();
+        loc.dispose();
         closeScreen();
         activeScreen = showNightResult(summary, {
           onShare: () => {

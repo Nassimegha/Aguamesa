@@ -53,8 +53,13 @@ export async function spawnCustomer(
   position: THREE.Vector3 = new THREE.Vector3(),
 ): Promise<Customer> {
   const root = await game.loadGLB(CUSTOMER_GLB[id]);
-  root.position.copy(position);
-  game.scene.add(root);
+  // Les animations écrivent la position du nœud animé (le personnage revient à l'origine
+  // à chaque image) : on place donc un support autour, et c'est le support qu'on déplace.
+  const holder = new THREE.Group();
+  holder.name = `customer_${id}`;
+  holder.position.copy(position);
+  holder.add(root);
+  game.scene.add(holder);
 
   const mixer = new THREE.AnimationMixer(root);
   const clips = new Map<AnimationName, THREE.AnimationClip>();
@@ -90,7 +95,8 @@ export async function spawnCustomer(
 
   function dispose(): void {
     unsubscribe();
-    game.scene.remove(root);
+    mixer.stopAllAction();
+    game.scene.remove(holder);
   }
 
   idle();
