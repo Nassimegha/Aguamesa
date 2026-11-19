@@ -13,6 +13,7 @@ import { Hono } from 'hono';
 import type { Context as HonoContext } from 'hono';
 import { context, redis } from '@devvit/web/server';
 import { resolvePostDay } from '../content';
+import { liveDrinkForDay, withLiveDrink } from '../drink';
 import { refreshFlair } from '../flair';
 import { getLeaderboard, type BoardScope } from '../leaderboard';
 import { finishNight } from '../night';
@@ -58,7 +59,8 @@ api.get('/init', async (c) => {
   const day = resolvePostDay(context.postData);
   const player = await loadOrCreatePlayer(store, username);
   const playedToday = await getPlayedToday(store, day.dayId, username, day.glasses.length);
-  return c.json({ player: { ...player, playedToday }, today: day });
+  const today = withLiveDrink(day, await liveDrinkForDay(store, day.dayId));
+  return c.json({ player: { ...player, playedToday }, today });
 });
 
 /** POST /pour — real: server score, one try per glass (replay = stored). */

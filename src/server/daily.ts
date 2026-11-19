@@ -8,9 +8,11 @@
 //     builds the same night), so the game never has an empty day
 //   - publishing is idempotent per day: a second call returns the stored
 //     post id without creating another post
-import type { DailyService, GlassModel, LocationId, Twist } from '../shared/types';
+import type { DailyService, GlassModel, GlassSpec, LocationId, Twist } from '../shared/types';
+import { specialForDayId } from './calendar';
 import { getDay } from './content';
-import { diffDays } from './dates';
+import { addDays, diffDays } from './dates';
+import { dayDrinkKey, pickedDrinkForPost } from './drink';
 import type { Store } from './redis';
 
 export function nightPostTitle(night: number): string {
@@ -32,7 +34,14 @@ export type NightPoster = {
 };
 
 export type PublishOutcome =
-  | { ok: true; postId: string; night: number; fromFallback: boolean; replayed: boolean }
+  | {
+      ok: true;
+      postId: string;
+      night: number;
+      fromFallback: boolean;
+      replayed: boolean;
+      drinkOfTheDay: string | undefined;
+    }
   | { ok: false; error: string };
 
 // ---------- seeded fallback ----------
@@ -88,17 +97,31 @@ export function fallbackDay(dayId: string): DailyService {
     if (item === undefined) throw new Error('Empty fallback pool');
     return item;
   };
+  // The fallback honors the week calendar like authored content does.
+  const special = specialForDayId(dayId);
+  const count = special === 'saturday_rush' ? 7 : 5;
+  const glasses: GlassSpec[] = Array.from({ length: count }, () => ({
+    model: pick(FALLBACK_MODELS),
+    line: 0.6 + rng() * 0.25,
+    flow: 0.7 + rng() * 0.6,
+    twist: special === 'blind_friday' ? 'hidden_line' : pick(FALLBACK_TWISTS),
+    customer: pick(FALLBACK_CUSTOMERS),
+  }));
+  if (special === 'sunday_boss') {
+    glasses[4] = {
+      model: pick(FALLBACK_MODELS),
+      line: 0.7 + rng() * 0.12,
+      flow: 0.9 + rng() * 0.3,
+      twist: 'layers3',
+      customer: pick(FALLBACK_CUSTOMERS),
+    };
+  }
   return {
     dayId,
     night: fallbackNight(dayId),
     location: pick(FALLBACK_LOCATION_CYCLE),
-    glasses: Array.from({ length: 5 }, () => ({
-      model: pick(FALLBACK_MODELS),
-      line: 0.6 + rng() * 0.25,
-      flow: 0.7 + rng() * 0.6,
-      twist: pick(FALLBACK_TWISTS),
-      customer: pick(FALLBACK_CUSTOMERS),
-    })),
+    glasses,
+    ...(special === undefined ? {} : { special }),
   };
 }
 
@@ -120,7 +143,14 @@ export async function publishNight(
   const existing = await store.get(nightPostKey(dayId));
   if (existing !== undefined && existing.length > 0) {
     const { day, fromFallback } = resolveDayForPost(dayId);
-    return { ok: true, postId: existing, night: day.night, fromFallback, replayed: true };
+    return {
+      ok: true,
+      postId: existing,
+      night: day.night,
+      fromFallback,
+      replayed: true,
+      drinkOfTheDay: undefined,
+    };
   }
   const { day, fromFallback } = resolveDayForPost(dayId);
   let postId: string;
@@ -136,5 +166,18 @@ export async function publishNight(
     return { ok: false, error: `Post creation failed: ${String(error)}` };
   }
   await store.set(nightPostKey(dayId), postId);
-  return { ok: true, postId, night: day.night, fromFallback, replayed: false };
+  // Carry yesterday's mod-picked drink into the new day (T5.2). Without
+  // a pick, the content default stands.
+  let drinkOfTheDay: string | undefined;
+  const yesterday = addDays(dayId, -1);
+  if (yesterday !== undefined) {
+    const yesterdayPost = await store.get(nightPostKey(yesterday));
+    if (yesterdayPost !== undefined) {
+      drinkOfTheDay = await pickedDrinkForPost(store, yesterdayPost);
+    }
+  }
+  if (drinkOfTheDay !== undefined) {
+    await store.set(dayDrinkKey(dayId), drinkOfTheDay);
+  }
+  return { ok: true, postId, night: day.night, fromFallback, replayed: false, drinkOfTheDay };
 }

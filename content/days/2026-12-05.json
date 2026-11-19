@@ -1,0 +1,16 @@
+{
+  "dayId": "2026-12-05",
+  "night": 35,
+  "location": "pirate",
+  "special": "saturday_rush",
+  "drinkOfTheDay": "Rhum arrangé sans alcool",
+  "glasses": [
+    { "model": "tankard", "line": 0.78, "flow": 1.0, "twist": "none", "customer": "pirate" },
+    { "model": "pint", "line": 0.7, "flow": 1.0, "twist": "foam", "customer": "giant" },
+    { "model": "coconut", "line": 0.66, "flow": 0.9, "twist": "none", "customer": "sailor" },
+    { "model": "goblet", "line": 0.72, "flow": 1.0, "twist": "steam", "customer": "ghost" },
+    { "model": "thimble", "line": 0.6, "flow": 0.7, "twist": "none", "customer": "fairy" },
+    { "model": "flute", "line": 0.68, "flow": 0.9, "twist": "none", "customer": "wizard" },
+    { "model": "teacup", "line": 0.62, "flow": 0.8, "twist": "ice", "customer": "owl" }
+  ]
+}

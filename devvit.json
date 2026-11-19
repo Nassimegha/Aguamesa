@@ -45,6 +45,13 @@
         "location": "subreddit",
         "forUserType": "moderator",
         "endpoint": "/internal/menu/publish-now"
+      },
+      {
+        "label": "Choisir la boisson du jour",
+        "description": "Validate the top !boisson comment as the next day's drink",
+        "location": "post",
+        "forUserType": "moderator",
+        "endpoint": "/internal/menu/drink-pick"
       }
     ]
   },

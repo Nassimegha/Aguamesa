@@ -1,0 +1,13 @@
+{
+  "dayId": "2026-12-07",
+  "night": 37,
+  "location": "cafe",
+  "drinkOfTheDay": "Café de minuit",
+  "glasses": [
+    { "model": "pint", "line": 0.74, "flow": 1.1, "twist": "spin", "customer": "barista" },
+    { "model": "mug_giant", "line": 0.8, "flow": 1.0, "twist": "none", "customer": "giant" },
+    { "model": "teacup", "line": 0.66, "flow": 0.9, "twist": "leak", "customer": "owl" },
+    { "model": "goblet", "line": 0.72, "flow": 1.0, "twist": "steam", "customer": "ghost" },
+    { "model": "flute", "line": 0.7, "flow": 1.0, "twist": "none", "customer": "fairy" }
+  ]
+}

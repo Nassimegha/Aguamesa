@@ -3,7 +3,8 @@
 // must reject malformed content files (Task 5 runs it over 14 files).
 import { describe, test } from 'node:test';
 import { strict as assert } from 'node:assert';
-import { getDay, latestDay, resolvePostDay, validateDailyService } from './content';
+import { checkSpecialCompliance } from './calendar';
+import { allDays, getDay, latestDay, resolvePostDay, validateDailyService } from './content';
 
 const SEED_GLASSES = [
   { model: 'mug_giant', line: 0.78, flow: 1.0, twist: 'none', customer: 'giant' },
@@ -25,14 +26,26 @@ describe('content', () => {
     const day = getDay('2026-11-24');
     assert.ok(day !== undefined);
     assert.deepEqual(JSON.parse(JSON.stringify(day)), SEED_DAY);
-    assert.deepEqual(latestDay(), day);
   });
 
   test('resolvePostDay prefers the post dayId, else the latest day', () => {
     assert.equal(resolvePostDay({ dayId: '2026-11-24' }).dayId, '2026-11-24');
-    assert.equal(resolvePostDay({ dayId: '2999-01-01' }).dayId, '2026-11-24');
-    assert.equal(resolvePostDay(undefined).dayId, '2026-11-24');
-    assert.equal(resolvePostDay({}).dayId, '2026-11-24');
+    assert.equal(resolvePostDay({ dayId: '2999-01-01' }).dayId, latestDay().dayId);
+    assert.equal(resolvePostDay(undefined).dayId, latestDay().dayId);
+    assert.equal(resolvePostDay({}).dayId, latestDay().dayId);
+  });
+
+  test('T5 acceptance: 14 December days, sequential nights, all compliant', () => {
+    const days = allDays();
+    const december = days.filter((day) => day.dayId.startsWith('2026-12-'));
+    assert.equal(december.length, 14);
+    december.forEach((day, i) => {
+      assert.equal(day.dayId, `2026-12-${String(i + 1).padStart(2, '0')}`);
+      assert.equal(day.night, 31 + i);
+      assert.ok(typeof day.drinkOfTheDay === 'string' && day.drinkOfTheDay.length > 0);
+      assert.deepEqual(checkSpecialCompliance(day), []);
+    });
+    assert.equal(latestDay().dayId, '2026-12-14');
   });
 
   test('validator accepts a saturday_rush with 7 glasses', () => {

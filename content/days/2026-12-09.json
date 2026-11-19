@@ -1,0 +1,13 @@
+{
+  "dayId": "2026-12-09",
+  "night": 39,
+  "location": "chalet",
+  "drinkOfTheDay": "Chocolat aux marshmallows",
+  "glasses": [
+    { "model": "teacup", "line": 0.68, "flow": 0.9, "twist": "none", "customer": "barista" },
+    { "model": "goblet", "line": 0.76, "flow": 1.0, "twist": "ice", "customer": "owl" },
+    { "model": "pint", "line": 0.78, "flow": 1.1, "twist": "tilt", "customer": "sailor" },
+    { "model": "flute", "line": 0.72, "flow": 1.0, "twist": "steam", "customer": "fairy" },
+    { "model": "mug_giant", "line": 0.82, "flow": 1.0, "twist": "none", "customer": "giant" }
+  ]
+}

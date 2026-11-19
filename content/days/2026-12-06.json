@@ -1,0 +1,14 @@
+{
+  "dayId": "2026-12-06",
+  "night": 36,
+  "location": "castle",
+  "special": "sunday_boss",
+  "drinkOfTheDay": "Potion violette",
+  "glasses": [
+    { "model": "goblet", "line": 0.72, "flow": 1.0, "twist": "steam", "customer": "ghost" },
+    { "model": "pint", "line": 0.74, "flow": 1.0, "twist": "tilt", "customer": "pirate" },
+    { "model": "thimble", "line": 0.62, "flow": 0.8, "twist": "none", "customer": "fairy" },
+    { "model": "tankard", "line": 0.78, "flow": 1.0, "twist": "foam", "customer": "giant" },
+    { "model": "flute", "line": 0.7, "flow": 0.9, "twist": "layers3", "customer": "wizard" }
+  ]
+}

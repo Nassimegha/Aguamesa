@@ -1,0 +1,13 @@
+{
+  "dayId": "2026-12-14",
+  "night": 44,
+  "location": "beach",
+  "drinkOfTheDay": "Coucher de soleil",
+  "glasses": [
+    { "model": "coconut", "line": 0.76, "flow": 1.1, "twist": "tilt", "customer": "sailor" },
+    { "model": "pint", "line": 0.8, "flow": 1.1, "twist": "spin", "customer": "fairy" },
+    { "model": "goblet", "line": 0.78, "flow": 1.0, "twist": "steam", "customer": "ghost" },
+    { "model": "flute", "line": 0.74, "flow": 1.0, "twist": "layers2", "customer": "wizard" },
+    { "model": "tankard", "line": 0.84, "flow": 1.2, "twist": "ice", "customer": "pirate" }
+  ]
+}

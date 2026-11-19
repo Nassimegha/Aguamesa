@@ -1,0 +1,14 @@
+{
+  "dayId": "2026-12-04",
+  "night": 34,
+  "location": "fair",
+  "special": "blind_friday",
+  "drinkOfTheDay": "Limonade du manège",
+  "glasses": [
+    { "model": "pint", "line": 0.7, "flow": 1.0, "twist": "hidden_line", "customer": "giant" },
+    { "model": "coconut", "line": 0.68, "flow": 0.9, "twist": "hidden_line", "customer": "fairy" },
+    { "model": "teacup", "line": 0.62, "flow": 0.8, "twist": "hidden_line", "customer": "owl" },
+    { "model": "goblet", "line": 0.72, "flow": 1.0, "twist": "hidden_line", "customer": "ghost" },
+    { "model": "flute", "line": 0.66, "flow": 0.9, "twist": "hidden_line", "customer": "wizard" }
+  ]
+}

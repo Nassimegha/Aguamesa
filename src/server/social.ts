@@ -7,6 +7,7 @@
 //   - flairs are set from the app account (moderator power on install).
 import { reddit } from '@devvit/web/server';
 import { isT3 } from '@devvit/web/shared';
+import type { DrinkComments } from './drink';
 import type { FlairSetter } from './flair';
 import type { CommentPoster } from './share';
 
@@ -16,6 +17,20 @@ export function createCommentPoster(): CommentPoster {
       if (!isT3(postId)) throw new Error(`Not a post id: ${postId}`);
       const comment = await reddit.submitComment({ id: postId, text, runAs: 'USER' });
       return { commentUrl: `https://www.reddit.com${comment.permalink}` };
+    },
+  };
+}
+
+export function createDrinkComments(): DrinkComments {
+  return {
+    listPostComments: async ({ postId, limit }) => {
+      if (!isT3(postId)) throw new Error(`Not a post id: ${postId}`);
+      const comments = await reddit.getComments({ postId, limit }).all();
+      return comments.map((comment) => ({
+        id: comment.id,
+        body: comment.body,
+        score: comment.score,
+      }));
     },
   };
 }

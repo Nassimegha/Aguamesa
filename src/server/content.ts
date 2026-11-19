@@ -10,6 +10,20 @@
 // criterion runs against: every content/days/*.json must pass it.
 import type { DailyService, GlassModel, GlassSpec, LocationId, Twist } from '../shared/types';
 import day20261124 from '../../content/days/2026-11-24.json' with { type: 'json' };
+import day20261201 from '../../content/days/2026-12-01.json' with { type: 'json' };
+import day20261202 from '../../content/days/2026-12-02.json' with { type: 'json' };
+import day20261203 from '../../content/days/2026-12-03.json' with { type: 'json' };
+import day20261204 from '../../content/days/2026-12-04.json' with { type: 'json' };
+import day20261205 from '../../content/days/2026-12-05.json' with { type: 'json' };
+import day20261206 from '../../content/days/2026-12-06.json' with { type: 'json' };
+import day20261207 from '../../content/days/2026-12-07.json' with { type: 'json' };
+import day20261208 from '../../content/days/2026-12-08.json' with { type: 'json' };
+import day20261209 from '../../content/days/2026-12-09.json' with { type: 'json' };
+import day20261210 from '../../content/days/2026-12-10.json' with { type: 'json' };
+import day20261211 from '../../content/days/2026-12-11.json' with { type: 'json' };
+import day20261212 from '../../content/days/2026-12-12.json' with { type: 'json' };
+import day20261213 from '../../content/days/2026-12-13.json' with { type: 'json' };
+import day20261214 from '../../content/days/2026-12-14.json' with { type: 'json' };
 
 const GLASS_MODELS: readonly string[] = [
   'pint',
@@ -121,10 +135,29 @@ function mustValidate(value: unknown, name: string): DailyService {
   return day;
 }
 
-/** Every known DailyService, keyed by dayId. Task 5 extends this to 14 days. */
+/** Every known DailyService, keyed by dayId (§10 seed + 14 December days). */
 const DAYS: Record<string, DailyService> = {
   '2026-11-24': mustValidate(day20261124, 'content/days/2026-11-24.json'),
+  '2026-12-01': mustValidate(day20261201, 'content/days/2026-12-01.json'),
+  '2026-12-02': mustValidate(day20261202, 'content/days/2026-12-02.json'),
+  '2026-12-03': mustValidate(day20261203, 'content/days/2026-12-03.json'),
+  '2026-12-04': mustValidate(day20261204, 'content/days/2026-12-04.json'),
+  '2026-12-05': mustValidate(day20261205, 'content/days/2026-12-05.json'),
+  '2026-12-06': mustValidate(day20261206, 'content/days/2026-12-06.json'),
+  '2026-12-07': mustValidate(day20261207, 'content/days/2026-12-07.json'),
+  '2026-12-08': mustValidate(day20261208, 'content/days/2026-12-08.json'),
+  '2026-12-09': mustValidate(day20261209, 'content/days/2026-12-09.json'),
+  '2026-12-10': mustValidate(day20261210, 'content/days/2026-12-10.json'),
+  '2026-12-11': mustValidate(day20261211, 'content/days/2026-12-11.json'),
+  '2026-12-12': mustValidate(day20261212, 'content/days/2026-12-12.json'),
+  '2026-12-13': mustValidate(day20261213, 'content/days/2026-12-13.json'),
+  '2026-12-14': mustValidate(day20261214, 'content/days/2026-12-14.json'),
 };
+
+/** All registered days, oldest first (drives the T5 compliance test). */
+export function allDays(): DailyService[] {
+  return Object.values(DAYS).sort((a, b) => (a.dayId < b.dayId ? -1 : 1));
+}
 
 export function getDay(dayId: string): DailyService | undefined {
   return DAYS[dayId];
