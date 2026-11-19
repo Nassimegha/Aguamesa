@@ -54,6 +54,13 @@ function parsePlayer(raw: string | undefined, username: string): PlayerState | u
   return undefined;
 }
 
+/** Current streak from a raw profile, 0 when missing or corrupt. */
+export function readStreak(raw: string | null, username: string): number {
+  if (raw === null) return 0;
+  const player = parsePlayer(raw, username);
+  return player === undefined ? 0 : player.streak;
+}
+
 /** Load the profile, creating (and storing) a default one on first sight. */
 export async function loadOrCreatePlayer(store: Store, username: string): Promise<PlayerState> {
   const found = parsePlayer(await store.get(playerKey(username)), username);

@@ -7,8 +7,11 @@
 // wins atomically (brief piège: no double score on double tap). A replay
 // returns the STORED result without recomputing.
 import type { DailyService, GlassSpec, PourResult } from '../shared/types';
+import { beatPercentFromScores, crowdLineFromStats } from './crowd';
 import { fallbackPour } from './pourFallback';
 import { glassCrowdKey, glassScoresKey, poursKey, type Store } from './redis';
+
+export { CROWD_MIN_PLAYERS, SEEDED_BEAT_PERCENT } from './crowd';
 
 /** §7 pour signature (P1's pour() and the fallback both match it). */
 export type PourFn = (spec: GlassSpec, holdMs: number) => {
@@ -19,12 +22,6 @@ export type PourFn = (spec: GlassSpec, holdMs: number) => {
 
 /** Holds longer than this are rejected (broken client or abuse). */
 export const MAX_HOLD_MS = 60_000;
-
-/** Below this many other pours, crowdLine/beatPercent are seeded (T4 rule). */
-export const CROWD_MIN_PLAYERS = 5;
-
-/** beatPercent seed while the crowd is too small to measure. */
-export const SEEDED_BEAT_PERCENT = 50;
 
 export type PourInput = {
   username: string;
@@ -110,13 +107,11 @@ export async function pourGlass(
   // stopped, and beatPercent counts players who did worse (T4 rule).
   const stats = readCount(await store.hGetAll(glassCrowdKey(dayId, glassIndex)));
   const others = await store.zRange(glassScoresKey(dayId, glassIndex), 0, -1);
-  const crowdLine =
-    stats.count >= CROWD_MIN_PLAYERS ? stats.sumMilli / stats.count / 1000 : spec.line;
-  let beatPercent = SEEDED_BEAT_PERCENT;
-  if (others.length >= CROWD_MIN_PLAYERS) {
-    const worse = others.filter((entry) => entry.score < score).length;
-    beatPercent = Math.round((100 * worse) / others.length);
-  }
+  const crowdLine = crowdLineFromStats(stats.sumMilli, stats.count, spec.line);
+  const beatPercent = beatPercentFromScores(
+    others.map((entry) => entry.score),
+    score
+  );
   const result: PourResult = { score, level: overflow ? 1 : level, overflow, crowdLine, beatPercent };
 
   const first = await store.hSetNX(poursKey(dayId, username), field, JSON.stringify(result));

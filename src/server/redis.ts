@@ -81,5 +81,6 @@ export type Store = {
   zScore(key: string, member: string): Promise<number | undefined>;
   /** Rank-based ascending range (Redis ZRANGE defaults). Stop is inclusive; -1 = last. */
   zRange(key: string, start: number, stop: number): Promise<StoreZEntry[]>;
+  mGet(keys: string[]): Promise<(string | null)[]>;
   expire(key: string, seconds: number): Promise<unknown>;
 };

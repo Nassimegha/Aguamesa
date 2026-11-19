@@ -2,7 +2,10 @@
   "$schema": "https://developers.reddit.com/schema/config-file.v1.json",
   "name": "aguamesa",
   "permissions": {
-    "redis": true
+    "redis": true,
+    "reddit": {
+      "scope": "user"
+    }
   },
   "post": {
     "dir": "dist/client",

@@ -101,6 +101,10 @@ export class MemoryStore implements Store {
     return this.zsets.get(key)?.get(member);
   }
 
+  async mGet(keys: string[]): Promise<(string | null)[]> {
+    return keys.map((key) => this.strings.get(key) ?? null);
+  }
+
   async zRange(key: string, start: number, stop: number): Promise<StoreZEntry[]> {
     const entries = this.sorted(key);
     const end = stop < 0 ? entries.length + stop + 1 : stop + 1;

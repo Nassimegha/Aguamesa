@@ -39,6 +39,12 @@ describe('MemoryStore', () => {
     assert.equal(await store.zScore('z', 'a'), 20);
   });
 
+  test('mGet returns values with null for missing keys', async () => {
+    const store = new MemoryStore();
+    await store.set('a', '1');
+    assert.deepEqual(await store.mGet(['a', 'missing']), ['1', null]);
+  });
+
   test('zRange slices ascending with an inclusive stop (-1 = last)', async () => {
     const store = new MemoryStore();
     await store.zAdd(

@@ -4,18 +4,20 @@
 // (app.route('/api', api)), so routes here are '/init', '/pour', etc.
 // — NOT '/api/init'. Do not add the /api prefix here.
 //
-// Task 1 stubbed all 7 endpoints from contract 00 §6.2. Tasks 2-3 made
-// /init, /pour, /level/complete and /night/finish real (Redis, server
-// score, streaks). /share and /leaderboard keep their Task 1 stubs
-// until Task 4. /decor/buy persists but is free: prices are not in the
-// contract, and decor is first on the cut list (§12).
+// Task 1 stubbed all 7 endpoints from contract 00 §6.2; Tasks 2-4 made
+// them real (Redis, server score, streaks, leaderboards, share, flair).
+// /decor/buy persists but is free: prices are not in the contract, and
+// decor is first on the cut list (§12).
 // Types live in src/shared/types.ts (verbatim §6.1).
 import { Hono } from 'hono';
 import type { Context as HonoContext } from 'hono';
 import { context, redis } from '@devvit/web/server';
-import type { LeaderboardRow } from '../../shared/types';
 import { resolvePostDay } from '../content';
+import { refreshFlair } from '../flair';
+import { getLeaderboard, type BoardScope } from '../leaderboard';
 import { finishNight } from '../night';
+import { shareNight } from '../share';
+import { createCommentPoster, createFlairSetter } from '../social';
 import { getLevel, starsForTotal } from '../levels';
 import { getPlayedToday, loadOrCreatePlayer, savePlayer } from '../player';
 import type { Store } from '../redis';
@@ -24,6 +26,8 @@ import { pourGlass } from '../score';
 // Devvit's client satisfies Store structurally; this line fails the type
 // check if the two ever drift apart.
 const store: Store = redis;
+const commentPoster = createCommentPoster();
+const flairSetter = createFlairSetter();
 
 export const api = new Hono();
 
@@ -43,12 +47,7 @@ function loggedInUser(): string | undefined {
   return context.username;
 }
 
-/** DERIVED stub — no §10 example for /leaderboard. Real in Task 4. */
-const mockLeaderboard: LeaderboardRow[] = [
-  { rank: 1, username: 'nassime', total: 451, streak: 12 },
-  { rank: 2, username: 'marwa', total: 432, streak: 9 },
-  { rank: 3, username: 'mohamed', total: 418, streak: 12 },
-];
+
 
 /** GET /init — real: profile from Redis, day from the post. */
 api.get('/init', async (c) => {
@@ -103,27 +102,53 @@ api.post('/night/finish', async (c) => {
   if (!outcome.ok) {
     return c.json({ error: outcome.error }, 400);
   }
+  // Flair is best-effort: it must never fail a finished night.
+  const fresh = await loadOrCreatePlayer(store, username);
+  const flair = await refreshFlair(flairSetter, context.subredditName, fresh);
+  if (!flair.ok) {
+    console.error(`[aguamesa] flair refresh failed for ${username}: ${flair.error}`);
+  }
   return c.json(outcome.summary);
 });
 
-/** POST /share — stub until Task 4: fake commentUrl, nothing is posted. */
+/** POST /share — real: posts the score comment as the player, once per night. */
 api.post('/share', async (c) => {
+  const username = loggedInUser();
+  if (username === undefined) {
+    return c.json({ error: 'Login required' }, 401);
+  }
   const body = await readBody(c);
   if (!isRecord(body) || typeof body['dayId'] !== 'string') {
     return c.json({ error: 'Expected { dayId }' }, 400);
   }
-  return c.json({
-    commentUrl: 'https://www.reddit.com/r/aguamesa_dev/comments/mock-night-24/',
-  });
+  const day = resolvePostDay(context.postData);
+  if (body['dayId'] !== day.dayId) {
+    return c.json({ error: `Stale day: post plays ${day.dayId}` }, 400);
+  }
+  const postId = context.postId;
+  if (postId === undefined) {
+    return c.json({ error: 'Share from inside the nightly post' }, 400);
+  }
+  const outcome = await shareNight(store, commentPoster, day.dayId, username, postId);
+  if (!outcome.ok) {
+    return c.json({ error: outcome.error }, 400);
+  }
+  return c.json({ commentUrl: outcome.commentUrl });
 });
 
-/** GET /leaderboard?scope=day|all — stub until Task 4. */
-api.get('/leaderboard', (c) => {
-  const scope = c.req.query('scope');
-  if (scope !== undefined && scope !== 'day' && scope !== 'all') {
+/** GET /leaderboard?scope=day|all — real: top 50 plus the caller. */
+api.get('/leaderboard', async (c) => {
+  const username = loggedInUser();
+  if (username === undefined) {
+    return c.json({ error: 'Login required' }, 401);
+  }
+  const scopeParam = c.req.query('scope');
+  if (scopeParam !== undefined && scopeParam !== 'day' && scopeParam !== 'all') {
     return c.json({ error: 'Expected scope=day or scope=all' }, 400);
   }
-  return c.json(mockLeaderboard);
+  const scope: BoardScope = scopeParam === 'all' ? 'all' : 'day';
+  const day = resolvePostDay(context.postData);
+  return c.json(await getLeaderboard(store, scope, day.dayId, username));
 });
 
 /**
