@@ -527,6 +527,38 @@
   z-index: 2;
 }
 
+.tod-toggle {
+  position: fixed;
+  top: max(16px, env(safe-area-inset-top));
+  right: 16px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 48px;
+  padding: 0 16px 0 12px;
+  border-radius: 999px;
+  border: 2px solid rgba(251, 241, 220, 0.5);
+  background: rgba(20, 16, 28, 0.45);
+  color: var(--chalk);
+  font: 700 15px var(--font);
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  transition: transform 0.12s ease, background 0.3s ease;
+}
+
+.tod-toggle:active {
+  transform: scale(0.95);
+}
+
+.tod-toggle[aria-pressed='true'] {
+  background: rgba(30, 40, 90, 0.6);
+}
+
+.tod-toggle__icon {
+  font-size: 20px;
+}
+
 .scene-fade {
   position: fixed;
   inset: 0;

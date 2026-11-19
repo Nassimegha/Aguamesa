@@ -33,9 +33,28 @@ const LOCATION_IDS: Record<number, { key: LocationId; name: string }> = {
 const LOC_COLORS = ['#c9573f', '#2f9e95', '#5679c4', '#d79a1e', '#8a5a33', '#7c4bb8'];
 const MAP_URL = '/assets/map/';
 
-// Préréglage « night » du viewer (ambiance par défaut) : ciel indigo étoilé, mer sombre,
-// fenêtres et lanternes ambrées, phare bien visible. Le nom GOLDEN est gardé pour le code.
-const GOLDEN = {
+// Deux ambiances du viewer : Day (lumière dorée, par défaut) et Night (« Nuit »).
+// Le bouton soleil/lune passe de l'une à l'autre en fondu, sans recharger la scène.
+const DAY = {
+  sunDir: new THREE.Vector3(-0.62, 0.33, 0.48).normalize(),
+  sun: new THREE.Color('#ffc28a'),
+  sunI: 2.6,
+  hemiSky: new THREE.Color('#ffdcb8'),
+  hemiGround: new THREE.Color('#b68e6a'),
+  hemiI: 0.95,
+  zenith: new THREE.Color('#5f86cc'),
+  horizon: new THREE.Color('#ffcf9f'),
+  fog: 0.0021,
+  emissive: 1.2,
+  deep: new THREE.Color('#246f8c'),
+  shallow: new THREE.Color('#5fc6b9'),
+  beam: 0.1,
+  glow: 1.0,
+  stars: 0,
+};
+type Preset = typeof DAY;
+const GOLDEN: Preset = DAY; // valeurs de départ de la scène
+const NIGHT: Preset = {
   sunDir: new THREE.Vector3(0.35, 0.6, -0.55).normalize(),
   sun: new THREE.Color('#a9bdff'),
   sunI: 0.6,
@@ -318,13 +337,16 @@ export async function loadMap(
 
   // --- l'île -----------------------------------------------------------------------
   add(island);
+  const glowMats = new Set<THREE.MeshStandardMaterial>();
   island.traverse((o) => {
     if (!(o instanceof THREE.Mesh)) return;
     const m = o.material as THREE.MeshStandardMaterial;
     m.flatShading = true;
     m.needsUpdate = true;
     if (m.emissive && m.emissive.getHex() !== 0) {
-      m.emissiveIntensity = Math.min(m.emissiveIntensity, 1.2) * GOLDEN.emissive;
+      m.userData.baseEmissive = Math.min(m.emissiveIntensity, 1.2);
+      glowMats.add(m);
+      m.emissiveIntensity = m.userData.baseEmissive * GOLDEN.emissive;
     } else {
       o.castShadow = true;
       o.receiveShadow = true;
@@ -401,6 +423,7 @@ export async function loadMap(
   const path = meta.path.map((p) => new THREE.Vector3(...p));
   const walker = { f: 0, target: 0 };
   let selected: MapLocation | null = null;
+  const warmLights: { light: THREE.PointLight; halo: THREE.Sprite }[] = [];
 
   const locations: MapLocation[] = [];
   for (const L of meta.locations) {
@@ -418,11 +441,12 @@ export async function loadMap(
 
     const camTarget = worldOf(`CAMT_${L.id}`, L.camTarget);
     // lumière ambrée des fenêtres / lanternes du lieu, contre la mer indigo
-    const warm = add(new THREE.PointLight(AMBER, mobile ? 35 : 50, 28, 1.6));
+    const warm = add(new THREE.PointLight(AMBER, 0, 28, 1.6));
     warm.position.copy(camTarget).add(new THREE.Vector3(0, 3, 0));
     const halo = add(
-      new THREE.Sprite(new THREE.SpriteMaterial({ map: soft, color: AMBER, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, depthWrite: false })),
+      new THREE.Sprite(new THREE.SpriteMaterial({ map: soft, color: AMBER, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false })),
     );
+    warmLights.push({ light: warm, halo });
     halo.position.copy(warm.position);
     halo.scale.setScalar(12);
     const fog = add(new THREE.Group());
@@ -554,6 +578,7 @@ export async function loadMap(
     );
     glow.scale.setScalar(9);
     beam.add(glow);
+    beam.userData.glow = glow;
   }
 
   // mouettes et chauves-souris
@@ -650,6 +675,77 @@ export async function loadMap(
     walker.target = loc.pathIndex;
   }
 
+  // --- jour / nuit ---------------------------------------------------------------------
+  const cur: Preset = {
+    ...DAY,
+    sunDir: DAY.sunDir.clone(), sun: DAY.sun.clone(), hemiSky: DAY.hemiSky.clone(), hemiGround: DAY.hemiGround.clone(),
+    zenith: DAY.zenith.clone(), horizon: DAY.horizon.clone(), deep: DAY.deep.clone(), shallow: DAY.shallow.clone(),
+  };
+  const mix = (a: Preset, b: Preset, k: number): void => {
+    const n = (x: number, y: number): number => x + (y - x) * k;
+    cur.sunDir.lerpVectors(a.sunDir, b.sunDir, k).normalize();
+    for (const c of ['sun', 'hemiSky', 'hemiGround', 'zenith', 'horizon', 'deep', 'shallow'] as const) cur[c].lerpColors(a[c], b[c], k);
+    for (const f of ['sunI', 'hemiI', 'fog', 'emissive', 'beam', 'glow', 'stars'] as const) cur[f] = n(a[f], b[f]);
+  };
+  const fogExp = scene.fog as THREE.FogExp2;
+  function applyPreset(p: Preset): void {
+    sun.color.copy(p.sun);
+    sun.intensity = p.sunI;
+    sun.position.copy(p.sunDir).multiplyScalar(180);
+    hemi.color.copy(p.hemiSky);
+    hemi.groundColor.copy(p.hemiGround);
+    hemi.intensity = p.hemiI;
+    const su = skyMat.uniforms;
+    su.uZenith!.value.copy(p.zenith);
+    su.uHorizon!.value.copy(p.horizon);
+    su.uSunDir!.value.copy(p.sunDir);
+    su.uSunColor!.value.copy(p.sun);
+    su.uStars!.value = p.stars;
+    su.uGlow!.value = p.glow;
+    fogExp.color.copy(p.horizon);
+    fogExp.density = p.fog;
+    WU.uSunDir.value.copy(p.sunDir);
+    WU.uSunColor.value.copy(p.sun).multiplyScalar(p.sunI / 2.6);
+    WU.uDeep.value.copy(p.deep);
+    WU.uShallow.value.copy(p.shallow);
+    WU.uFogColor.value.copy(p.horizon);
+    WU.uFogDensity.value = p.fog;
+    WU.uNight.value = p.stars;
+    for (const m of glowMats) m.emissiveIntensity = (m.userData.baseEmissive as number) * p.emissive;
+    beamMat.opacity = p.beam;
+    const bg = beam.userData.glow as THREE.Sprite | undefined;
+    if (bg) bg.material.opacity = 0.3 + p.beam * 1.6;
+    cloudMat.color.setRGB(1, 1, 1).lerp(p.horizon, 0.3);
+    cloudMat.emissive.copy(p.horizon).lerp(new THREE.Color(1, 1, 1), 0.5);
+    cloudMat.emissiveIntensity = 0.55 * (1 - 0.75 * p.stars);
+    for (const w of warmLights) {
+      w.light.intensity = (mobile ? 35 : 50) * p.stars;
+      w.halo.material.opacity = 0.35 * p.stars;
+    }
+  }
+  applyPreset(cur);
+  let night = false;
+  let tod: { from: Preset; to: Preset; t: number } | null = null;
+  const todBtn = document.createElement('button');
+  todBtn.className = 'tod-toggle';
+  const renderTod = (): void => {
+    todBtn.innerHTML = `<span class="tod-toggle__icon">${night ? '🌙' : '☀️'}</span><span>${night ? 'Night' : 'Day'}</span>`;
+    todBtn.setAttribute('aria-label', night ? 'Switch to day' : 'Switch to night');
+    todBtn.setAttribute('aria-pressed', String(night));
+  };
+  renderTod();
+  todBtn.addEventListener('click', () => {
+    night = !night;
+    renderTod();
+    const snap: Preset = {
+      ...cur,
+      sunDir: cur.sunDir.clone(), sun: cur.sun.clone(), hemiSky: cur.hemiSky.clone(), hemiGround: cur.hemiGround.clone(),
+      zenith: cur.zenith.clone(), horizon: cur.horizon.clone(), deep: cur.deep.clone(), shallow: cur.shallow.clone(),
+    };
+    tod = { from: snap, to: night ? NIGHT : DAY, t: 0 };
+  });
+  document.body.appendChild(todBtn);
+
   // --- boucle -------------------------------------------------------------------------
   const tmp = new THREE.Vector3();
   const ray = new THREE.Raycaster();
@@ -663,6 +759,12 @@ export async function loadMap(
     time += dt;
     const t = time;
 
+    if (tod) {
+      tod.t = Math.min(1, tod.t + dt / 1.6);
+      mix(tod.from, tod.to, easeInOut(tod.t));
+      applyPreset(cur);
+      if (tod.t >= 1) tod = null;
+    }
     WU.uTime.value = t;
     riverMat.uniforms.uTime!.value = t;
     for (const b of bobbers) {
@@ -853,6 +955,7 @@ export async function loadMap(
     stopTick();
     controls.dispose();
     overlay.remove();
+    todBtn.remove();
     for (const o of added) scene.remove(o);
     for (const s of splashes) scene.remove(s.m);
     water.dispose();
