@@ -111,6 +111,7 @@ async function main(): Promise<void> {
   if (uiScreen === 'home') {
     showHome(MOCK_PLAYER, {
       onServir: () => console.log('✅ onServir'),
+      onLevels: () => console.log('✅ onLevels'),
       onCarte: () => console.log('✅ onCarte'),
       onClassement: () => console.log('✅ onClassement'),
       onEtagere: () => console.log('✅ onEtagere'),

@@ -7,6 +7,7 @@ import type { PlayerState } from './contractTypesTemp';
 
 export interface HomeActions {
   onServir(): void;
+  onLevels(): void;
   onCarte(): void;
   onClassement(): void;
   onEtagere(): void;
@@ -20,6 +21,7 @@ export function showHome(player: PlayerState, actions: HomeActions): Screen {
       <div class="home__title">Aguamesa</div>
       <div class="home__tagline">A midnight café. One glass at a time.</div>
       <button class="btn btn--primary home__servir" data-servir>Start Tonight's Shift</button>
+      <button class="btn home__levels" data-levels>⭐ Levels</button>
       <div class="home__row">
         <button class="btn home__secondary" data-carte>🗺️ Map</button>
         <button class="btn home__secondary" data-classement>🏆 Leaderboard</button>
@@ -36,6 +38,7 @@ export function showHome(player: PlayerState, actions: HomeActions): Screen {
   screen.el.querySelector('.home__top')!.appendChild(streakWidget.el);
 
   screen.el.querySelector('[data-servir]')?.addEventListener('click', actions.onServir);
+  screen.el.querySelector('[data-levels]')?.addEventListener('click', actions.onLevels);
   screen.el.querySelector('[data-carte]')?.addEventListener('click', actions.onCarte);
   screen.el.querySelector('[data-classement]')?.addEventListener('click', actions.onClassement);
   screen.el.querySelector('[data-etagere]')?.addEventListener('click', actions.onEtagere);

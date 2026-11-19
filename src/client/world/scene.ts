@@ -104,10 +104,10 @@ export function createScene(canvas: HTMLCanvasElement): GameScene {
 
 function addWarmEveningLighting(scene: THREE.Scene): void {
   // Ciel nocturne frais en haut, rebond chaud du bois/comptoir en bas.
-  scene.add(new THREE.HemisphereLight(0x6b5a7a, 0x2a1d14, 0.6));
+  scene.add(new THREE.HemisphereLight(0x6b5a7a, 0x2a1d14, 0.4));
 
-  // La lampe du café : chaude, proche, douce.
-  const lamp = new THREE.PointLight(0xffb066, 6, 10, 2);
+  // La lampe du café : chaude, proche, douce (chaque lieu ajoute ses propres lumières).
+  const lamp = new THREE.PointLight(0xffb066, 1.5, 10, 2);
   lamp.position.set(0.3, 0.6, 0.4);
   scene.add(lamp);
 

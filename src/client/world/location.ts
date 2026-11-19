@@ -91,6 +91,9 @@ function paintChalkboard(info: ChalkboardInfo): THREE.CanvasTexture {
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.anisotropy = 4;
+  // Le plan CHALKBOARD de Blender est tourné vers la salle : ses UV arrivent en miroir.
+  tex.repeat.x = -1;
+  tex.offset.x = 1;
   return tex;
 }
 
@@ -108,6 +111,37 @@ export async function loadLocation(game: GameScene, location: LocationId): Promi
 
   game.camera.position.copy(cameraPos.getWorldPosition(new THREE.Vector3()));
   game.camera.lookAt(cameraTarget.getWorldPosition(new THREE.Vector3()));
+
+  // Ambiance de nuit : chaleur des ampoules Edison et des bougies, liseré froid de la lune
+  // par la fenêtre, environnement (reflets du verre) adouci pour garder le contraste.
+  // L'occlusion et le grain sont déjà cuits dans les textures du .glb.
+  const { scene, renderer } = game;
+  const saved = { env: scene.environmentIntensity, tm: renderer.toneMapping, exp: renderer.toneMappingExposure };
+  scene.environmentIntensity = 0.3;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.15;
+  const mood = new THREE.Group();
+  mood.name = 'location_lights';
+  for (const x of [-0.6, -0.2, 0.2, 0.6]) {
+    const bulb = new THREE.PointLight(0xffa24a, 1.6, 2.6, 2);
+    bulb.position.set(x, 1.22, 0.3);
+    mood.add(bulb);
+  }
+  const key = new THREE.PointLight(0xffb766, 1.4, 2.2, 2); // chaleur sur le comptoir et le verre
+  key.position.set(-0.15, 0.55, -0.15);
+  mood.add(key);
+  const moon = new THREE.DirectionalLight(0x8ea6ff, 0.9); // liseré froid depuis la fenêtre
+  moon.position.set(-0.33, 1.15, 0.95);
+  moon.target.position.set(0.1, 0.1, 0);
+  mood.add(moon, moon.target);
+  decor.traverse((o) => {
+    if (o.name.startsWith('CANDLE_FLAME')) {
+      const c = new THREE.PointLight(0xffc070, 0.35, 0.7, 2);
+      c.position.copy(o.getWorldPosition(new THREE.Vector3())).add(new THREE.Vector3(0, 0.03, 0));
+      mood.add(c);
+    }
+  });
+  scene.add(mood);
 
   // flammes de bougie : vacillement leger (echelle + intensite emissive)
   const flames: { o: THREE.Mesh; ph: number; base: THREE.Vector3 }[] = [];
@@ -147,6 +181,10 @@ export async function loadLocation(game: GameScene, location: LocationId): Promi
     stopTick();
     boardTex?.dispose();
     game.scene.remove(decor);
+    scene.remove(mood);
+    scene.environmentIntensity = saved.env;
+    renderer.toneMapping = saved.tm;
+    renderer.toneMappingExposure = saved.exp;
   }
 
   return {
