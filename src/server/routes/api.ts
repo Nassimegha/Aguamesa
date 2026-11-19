@@ -4,17 +4,18 @@
 // (app.route('/api', api)), so routes here are '/init', '/pour', etc.
 // — NOT '/api/init'. Do not add the /api prefix here.
 //
-// Task 1 stubbed all 7 endpoints from contract 00 §6.2. Task 2 makes
-// three of them real (Redis + server score); the other four keep their
-// Task 1 stubs until Task 3 (/night/finish) and Task 4 (/share,
-// /leaderboard). /decor/buy stays stubbed: prices are not in the
+// Task 1 stubbed all 7 endpoints from contract 00 §6.2. Tasks 2-3 made
+// /init, /pour, /level/complete and /night/finish real (Redis, server
+// score, streaks). /share and /leaderboard keep their Task 1 stubs
+// until Task 4. /decor/buy persists but is free: prices are not in the
 // contract, and decor is first on the cut list (§12).
 // Types live in src/shared/types.ts (verbatim §6.1).
 import { Hono } from 'hono';
 import type { Context as HonoContext } from 'hono';
 import { context, redis } from '@devvit/web/server';
-import type { LeaderboardRow, NightSummary } from '../../shared/types';
+import type { LeaderboardRow } from '../../shared/types';
 import { resolvePostDay } from '../content';
+import { finishNight } from '../night';
 import { getLevel, starsForTotal } from '../levels';
 import { getPlayedToday, loadOrCreatePlayer, savePlayer } from '../player';
 import type { Store } from '../redis';
@@ -41,18 +42,6 @@ async function readBody(c: HonoContext): Promise<unknown> {
 function loggedInUser(): string | undefined {
   return context.username;
 }
-
-/** DERIVED stub — no §10 example for /night/finish. Real in Task 3. */
-const mockNightSummary: NightSummary = {
-  dayId: '2026-11-24',
-  scores: [98, 100, 71, 88, 94],
-  total: 451,
-  tips: 135,
-  streak: 12,
-  freezeUsed: false,
-  rank: 3,
-  shareText: '☕ Nuit #24 🍺98 🧚100 👻71 ⛵88 🧙94 = 451 · 🔥12',
-};
 
 /** DERIVED stub — no §10 example for /leaderboard. Real in Task 4. */
 const mockLeaderboard: LeaderboardRow[] = [
@@ -95,13 +84,26 @@ api.post('/pour', async (c) => {
   return c.json(outcome.result);
 });
 
-/** POST /night/finish — stub until Task 3. */
+/** POST /night/finish — real: totals, tips, streak, rank, shareText. */
 api.post('/night/finish', async (c) => {
+  const username = loggedInUser();
+  if (username === undefined) {
+    return c.json({ error: 'Login required' }, 401);
+  }
   const body = await readBody(c);
   if (!isRecord(body) || typeof body['dayId'] !== 'string') {
     return c.json({ error: 'Expected { dayId }' }, 400);
   }
-  return c.json({ ...mockNightSummary, dayId: body['dayId'] });
+  const day = resolvePostDay(context.postData);
+  if (body['dayId'] !== day.dayId) {
+    return c.json({ error: `Stale day: post plays ${day.dayId}` }, 400);
+  }
+  const player = await loadOrCreatePlayer(store, username);
+  const outcome = await finishNight(store, day, username, player);
+  if (!outcome.ok) {
+    return c.json({ error: outcome.error }, 400);
+  }
+  return c.json(outcome.summary);
 });
 
 /** POST /share — stub until Task 4: fake commentUrl, nothing is posted. */
