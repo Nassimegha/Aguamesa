@@ -12,9 +12,15 @@ function copyAssets(): Plugin {
     writeBundle(options) {
       const outDir = options.dir ?? '';
       if (!outDir.replace(/\\/g, '/').endsWith('dist/client')) return;
-      for (const sub of ['models', 'map']) {
+      // Un dossier qui échoue (fichier verrouillé sous Windows) ne doit pas empêcher l'autre.
+      for (const sub of ['map', 'models']) {
         const src = resolve(import.meta.dirname, 'assets', sub);
-        if (existsSync(src)) cpSync(src, resolve(outDir, 'assets', sub), { recursive: true });
+        if (!existsSync(src)) continue;
+        try {
+          cpSync(src, resolve(outDir, 'assets', sub), { recursive: true, force: true });
+        } catch (err) {
+          console.error(`[aguamesa-copy-assets] assets/${sub}:`, err);
+        }
       }
     },
   };

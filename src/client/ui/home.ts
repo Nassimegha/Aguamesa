@@ -18,14 +18,14 @@ export function showHome(player: PlayerState, actions: HomeActions): Screen {
     <div class="home">
       <div class="home__top"></div>
       <div class="home__title">Aguamesa</div>
-      <div class="home__tagline">Un café de minuit. Un verre à la fois.</div>
-      <button class="btn btn--primary home__servir" data-servir>Servir</button>
+      <div class="home__tagline">A midnight café. One glass at a time.</div>
+      <button class="btn btn--primary home__servir" data-servir>Start Tonight's Shift</button>
       <div class="home__row">
-        <button class="btn home__secondary" data-carte>🗺️ Carte</button>
-        <button class="btn home__secondary" data-classement>🏆 Classement</button>
-        <button class="btn home__secondary" data-etagere>🍺 Étagère</button>
+        <button class="btn home__secondary" data-carte>🗺️ Map</button>
+        <button class="btn home__secondary" data-classement>🏆 Leaderboard</button>
+        <button class="btn home__secondary" data-etagere>🍺 Shelf</button>
       </div>
-      <div class="home__footer">☕ Serveur Nv. ${player.serverLevel} · ${player.tips} pourboires</div>
+      <div class="home__footer">☕ Server Lv. ${player.serverLevel} · ${player.tips} tips</div>
     </div>
     `,
     'home-screen',

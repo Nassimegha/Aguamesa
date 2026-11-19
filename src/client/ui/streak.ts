@@ -11,10 +11,10 @@ export interface StreakWidget {
 }
 
 const MILESTONE_REWARD_LABEL: Record<3 | 7 | 14 | 30, string> = {
-  3: 'une déco pour le café',
-  7: 'le verre doré',
-  14: 'un badge de flair',
-  30: 'une enseigne néon à ton nom',
+  3: 'a new café decoration',
+  7: 'the golden glass',
+  14: 'a flair badge',
+  30: 'a neon sign with your name',
 };
 
 export function createStreakWidget(streak: number, streakFreezes: number): StreakWidget {
@@ -43,8 +43,8 @@ export function createStreakWidget(streak: number, streakFreezes: number): Strea
     const toast = document.createElement('div');
     toast.className = 'streak-toast';
     toast.innerHTML = `
-      <div class="streak-toast__title">🔥 ${milestone} nuits !</div>
-      <div class="streak-toast__body">Récompense débloquée : ${MILESTONE_REWARD_LABEL[milestone]}</div>
+      <div class="streak-toast__title">🔥 ${milestone} nights!</div>
+      <div class="streak-toast__body">Reward unlocked:${MILESTONE_REWARD_LABEL[milestone]}</div>
     `;
     document.body.appendChild(toast);
     requestAnimationFrame(() => toast.classList.add('streak-toast--in'));
@@ -58,8 +58,8 @@ export function createStreakWidget(streak: number, streakFreezes: number): Strea
     const toast = document.createElement('div');
     toast.className = 'streak-toast streak-toast--freeze';
     toast.innerHTML = `
-      <div class="streak-toast__title">🧊 Ta série est sauvée</div>
-      <div class="streak-toast__body">Un glaçon a protégé la nuit d'hier.</div>
+      <div class="streak-toast__title">🧊 Your streak is safe</div>
+      <div class="streak-toast__body">A streak freeze covered last night.</div>
     `;
     document.body.appendChild(toast);
     requestAnimationFrame(() => toast.classList.add('streak-toast--in'));
@@ -78,9 +78,9 @@ export function createStreakWidget(streak: number, streakFreezes: number): Strea
 
 /** Phrase du premier client qui remarque la série (brief 02 Tâche 5 bis §5). */
 export function streakLine(streak: number): string | null {
-  if (streak >= 30) return `${streak}e nuit ? Tu habites ici, non ?`;
-  if (streak >= 14) return `${streak} nuits d'affilée… tu es presque de la famille.`;
-  if (streak >= 7) return `${streak}e nuit d'affilée ? Pas mal du tout.`;
-  if (streak >= 3) return `${streak} nuits de suite, j'ai vu pire comme habitude.`;
+  if (streak >= 30) return `Night ${streak}? You basically live here.`;
+  if (streak >= 14) return `${streak} nights in a row… you're practically family.`;
+  if (streak >= 7) return `${streak} nights straight? Not bad at all.`;
+  if (streak >= 3) return `${streak} nights running. I've seen worse habits.`;
   return null;
 }

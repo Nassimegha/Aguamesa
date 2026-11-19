@@ -33,9 +33,9 @@ test('pitches stay in range for out-of-range levels', () => {
   assert.ok(dropPitch(0.9) > dropPitch(0.1));
 });
 
-test('crowd label: "82 % battus", with a no-break space and clamped to 0..100', () => {
-  assert.equal(beatLabel(82), '82 % battus');
-  assert.equal(beatLabel(82.6), '83 % battus');
-  assert.equal(beatLabel(-5), '0 % battus');
-  assert.equal(beatLabel(140), '100 % battus');
+test('crowd label: "Beat 82%", clamped to 0..100', () => {
+  assert.equal(beatLabel(82), 'Beat 82%');
+  assert.equal(beatLabel(82.6), 'Beat 83%');
+  assert.equal(beatLabel(-5), 'Beat 0%');
+  assert.equal(beatLabel(140), 'Beat 100%');
 });

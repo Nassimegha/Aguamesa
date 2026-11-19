@@ -33,7 +33,7 @@ const LABEL_HEIGHT = 0.026; // metres
 /** The label text. A no-break space keeps "82 %" together, French style. Exported for tests. */
 export function beatLabel(percent: number): string {
   const p = Math.round(Math.min(Math.max(percent, 0), 100));
-  return `${p} % battus`;
+  return `Beat ${p}%`;
 }
 
 /** Ring of short dashes, radius 1, lying flat (in the x/z plane). */

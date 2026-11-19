@@ -8,7 +8,8 @@ import type { GameScene } from './scene';
 export type CustomerId =
   | 'giant' | 'fairy' | 'ghost'
   | 'surfer' | 'crab_mister' | 'mermaid'
-  | 'yeti' | 'skier' | 'grandma_bear';
+  | 'yeti' | 'skier' | 'grandma_bear'
+  | 'pirate' | 'wizard' | 'barista';
 
 const CUSTOMER_GLB: Record<CustomerId, string> = {
   giant: '/assets/models/char_giant.glb',
@@ -20,6 +21,9 @@ const CUSTOMER_GLB: Record<CustomerId, string> = {
   yeti: '/assets/models/char_yeti.glb',
   skier: '/assets/models/char_skier.glb',
   grandma_bear: '/assets/models/char_grandma_bear.glb',
+  pirate: '/assets/models/char_pirate.glb',
+  wizard: '/assets/models/char_wizard.glb',
+  barista: '/assets/models/char_barista.glb',
 };
 
 const ANIMATION_NAMES = ['idle', 'happy', 'meh', 'splashed'] as const;

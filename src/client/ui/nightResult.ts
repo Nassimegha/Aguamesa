@@ -18,22 +18,22 @@ function scoreClass(score: number): string {
 
 export function showNightResult(summary: NightSummary, actions: NightResultActions): Screen {
   const scoreChips = summary.scores
-    .map((s, i) => `<div class="score-chip ${scoreClass(s)}">${s === 0 ? '💦' : s}<small>Verre ${i + 1}</small></div>`)
+    .map((s, i) => `<div class="score-chip ${scoreClass(s)}">${s === 0 ? '💦' : s}<small>Glass ${i + 1}</small></div>`)
     .join('');
 
   const screen = mountScreen(
     `
-    ${header('Service de la nuit', actions.onClose)}
+    ${header("Tonight's Shift", actions.onClose)}
     <div class="card night-result">
       <div class="night-result__total">${summary.total}<span>/500</span></div>
       <div class="score-row">${scoreChips}</div>
       <div class="night-result__stats">
-        <div>💰 <b>${summary.tips}</b> pourboires</div>
+        <div>💰 <b>${summary.tips}</b> tips</div>
         <div class="night-result__streak"></div>
-        <div>🏅 Rang <b>#${summary.rank}</b></div>
+        <div>🏅 Rank <b>#${summary.rank}</b></div>
       </div>
-      ${summary.freezeUsed ? '<div class="night-result__note">🧊 Un glaçon a sauvé ta série hier.</div>' : ''}
-      <button class="btn btn--primary night-result__share" data-share>Partager</button>
+      ${summary.freezeUsed ? '<div class="night-result__note">🧊 A streak freeze saved last night.</div>' : ''}
+      <button class="btn btn--primary night-result__share" data-share>Share</button>
     </div>
     `,
     'night-result-screen',

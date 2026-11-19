@@ -15,7 +15,7 @@ export interface LeaderboardActions {
 
 function renderRows(rows: LeaderboardRow[], currentUsername: string): string {
   if (rows.length === 0) {
-    return '<div class="leaderboard__empty">Personne n\'a encore joué aujourd\'hui. Sois le premier.</div>';
+    return '<div class="leaderboard__empty">Nobody has played yet tonight. Be the first.</div>';
   }
   return rows
     .map(
@@ -33,11 +33,11 @@ function renderRows(rows: LeaderboardRow[], currentUsername: string): string {
 export function showLeaderboard(data: LeaderboardData, actions: LeaderboardActions): Screen {
   const screen = mountScreen(
     `
-    ${header('Classement', actions.onClose)}
+    ${header('Leaderboard', actions.onClose)}
     <div class="card leaderboard">
       <div class="leaderboard__tabs">
-        <button class="btn leaderboard__tab leaderboard__tab--on" data-tab="day">Aujourd'hui</button>
-        <button class="btn leaderboard__tab" data-tab="all">Tous les temps</button>
+        <button class="btn leaderboard__tab leaderboard__tab--on" data-tab="day">Tonight</button>
+        <button class="btn leaderboard__tab" data-tab="all">All Time</button>
       </div>
       <div class="leaderboard__list" data-list>${renderRows(data.day, data.currentUsername)}</div>
     </div>

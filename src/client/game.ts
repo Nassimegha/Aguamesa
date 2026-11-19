@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import { api, type GameApi } from './api';
 import { mockApi } from './mockApi';
 import { createScene } from './world/scene';
-import { loadLocation } from './world/location';
+import { loadLocation, type LocationId } from './world/location';
 import { spawnCustomer, type Customer, type CustomerId } from './world/customers';
 import { loadMap } from './world/map';
 import { showHome } from './ui/home';
@@ -22,7 +22,7 @@ const isLocal = window.location.hostname === 'localhost' || window.location.host
 const gameApi: GameApi = isLocal ? mockApi : api;
 
 const KNOWN_CUSTOMERS: ReadonlySet<CustomerId> = new Set([
-  'giant', 'fairy', 'ghost', 'surfer', 'crab_mister', 'mermaid', 'yeti', 'skier', 'grandma_bear',
+  'giant', 'fairy', 'ghost', 'surfer', 'crab_mister', 'mermaid', 'yeti', 'skier', 'grandma_bear', 'pirate', 'wizard',
 ]);
 const KNOWN_LOCATIONS: ReadonlySet<string> = new Set(['cafe', 'beach', 'chalet']);
 
@@ -38,6 +38,9 @@ const CUSTOMER_SPOT: Record<CustomerId, THREE.Vector3> = {
   fairy: new THREE.Vector3(0.2, 0, 0.02),
   skier: new THREE.Vector3(0.2, 0, 0.02),
   crab_mister: new THREE.Vector3(0.2, 0, 0.02),
+  pirate: new THREE.Vector3(0.3, -0.34, 0.65),
+  wizard: new THREE.Vector3(0.3, -0.34, 0.65),
+  barista: new THREE.Vector3(-0.36, -0.34, 0.6),
 };
 
 const canvas = document.getElementById('bg') as HTMLCanvasElement;
@@ -50,17 +53,45 @@ function closeScreen(): void {
   activeScreen = null;
 }
 
-async function playTonight(today: DailyService): Promise<void> {
-  const locationId = KNOWN_LOCATIONS.has(today.location) ? (today.location as 'cafe' | 'beach' | 'chalet') : 'cafe';
-  if (locationId !== today.location) {
-    console.warn(`[aguamesa] lieu "${today.location}" pas encore construit, cafe par defaut`);
+// Fondu noir entre la carte et l'intérieur d'un lieu.
+const fade = document.createElement('div');
+fade.className = 'scene-fade';
+document.body.appendChild(fade);
+const wait = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
+async function fadeOut(): Promise<void> {
+  fade.classList.add('scene-fade--on');
+  await wait(470);
+}
+function fadeIn(): void {
+  fade.classList.remove('scene-fade--on');
+}
+
+/** Cadrage portrait : comptoir en bas, verre au centre, client derrière, bien visible. */
+function frameGameplayCamera(): void {
+  const portrait = game.camera.aspect < 1;
+  game.camera.fov = portrait ? 62 : 45;
+  game.camera.updateProjectionMatrix();
+  if (portrait) {
+    game.camera.position.set(0, 0.38, -0.92);
+    game.camera.lookAt(0.02, 0.1, 0.4);
+  } else {
+    game.camera.position.set(0, 0.3, -0.5);
+    game.camera.lookAt(0.08, 0.12, 0.3);
+  }
+}
+
+async function playTonight(today: DailyService, visitLocation?: string): Promise<void> {
+  const wanted = visitLocation ?? today.location;
+  const locationId = KNOWN_LOCATIONS.has(wanted) ? (wanted as 'cafe' | 'beach' | 'chalet') : 'cafe';
+  if (locationId !== wanted) {
+    console.warn(`[aguamesa] location "${wanted}" not built yet, using cafe`);
   }
 
   const loc = await loadLocation(game, locationId);
   // La caméra du lieu montre tout le décor ; pour verser, on se rapproche du verre
   // (sinon il fait quelques pixels sur un téléphone).
-  game.camera.position.set(0, 0.3, -0.5);
-  game.camera.lookAt(0.08, 0.12, 0.3);
+  frameGameplayCamera();
+  fadeIn();
   const sound = createGameAudio();
   const stage = createGlassStage({
     game,
@@ -68,6 +99,15 @@ async function playTonight(today: DailyService): Promise<void> {
     placeGlass: (root) => loc.placeGlass(root),
     sound,
   });
+
+  // Le barista, derrière la machine à gauche : il reste toute la nuit et réagit aussi.
+  let barista: Customer | null = null;
+  spawnCustomer(game, 'barista', CUSTOMER_SPOT.barista.clone())
+    .then((b) => {
+      barista = b;
+      if (b.root.parent) b.root.parent.rotation.y = 0.5; // le support, pas le nœud animé
+    })
+    .catch((err: unknown) => console.error('barista:', err));
 
   let activeCustomer: Customer | null = null;
   // Un client se charge en différé : s'il arrive après le verre suivant (ou la fin de
@@ -95,7 +135,10 @@ async function playTonight(today: DailyService): Promise<void> {
           })
           .catch((err: unknown) => console.error('spawnCustomer:', err));
       },
-      onPourEnd: (_index, outcome) => activeCustomer?.reactTo(outcome),
+      onPourEnd: (_index, outcome) => {
+        activeCustomer?.reactTo(outcome);
+        barista?.reactTo(outcome);
+      },
       onServerResult: (index, result) => stage.showCrowd(index, result),
       onGlassSkipped: (index) => console.log(`[aguamesa] verre ${index + 1} deja joue aujourd'hui`),
       onError: (err) => console.error('[aguamesa] nuit:', err),
@@ -103,6 +146,8 @@ async function playTonight(today: DailyService): Promise<void> {
         customerToken++;
         activeCustomer?.dispose();
         activeCustomer = null;
+        barista?.dispose();
+        barista = null;
         stage.clear();
         sound.dispose();
         loc.dispose();
@@ -133,15 +178,27 @@ async function boot(): Promise<void> {
     },
     onCarte: () => {
       closeScreen();
-      const unlocked = new Set<'cafe' | 'beach' | 'chalet'>(['cafe', 'beach', 'chalet']);
-      void loadMap(game, unlocked, (id) => console.log('[aguamesa] carte: entrer dans', id)).then((map) => {
-        const backBtn = document.createElement('button');
+      const unlocked = new Set<LocationId>(['cafe', 'beach', 'chalet', 'fair', 'pirate', 'castle']);
+      let backBtn: HTMLButtonElement | null = null;
+      let mapRef: { dispose(): void } | null = null;
+      const enter = async (id: LocationId): Promise<void> => {
+        await fadeOut();
+        mapRef?.dispose();
+        backBtn?.remove();
+        await playTonight(today, id);
+      };
+      void loadMap(game, unlocked, (id) => {
+        enter(id).catch((err: unknown) => console.error('[aguamesa] enter:', err));
+      }).then((map) => {
+        mapRef = map;
+        backBtn = document.createElement('button');
         backBtn.className = 'btn btn--icon btn--ghost';
         backBtn.textContent = '←';
         backBtn.style.cssText = 'position:fixed;top:max(16px,env(safe-area-inset-top));left:16px;z-index:20;';
+        backBtn.setAttribute('aria-label', 'Back');
         backBtn.addEventListener('click', () => {
           map.dispose();
-          backBtn.remove();
+          backBtn?.remove();
           void boot();
         });
         document.body.appendChild(backBtn);

@@ -7,14 +7,14 @@ import type { GlassModel } from './contractTypesTemp';
 const ALL_MODELS: GlassModel[] = ['pint', 'mug_giant', 'thimble', 'flute', 'coconut', 'teacup', 'goblet', 'tankard'];
 
 const MODEL_LABEL: Record<GlassModel, string> = {
-  pint: 'Pinte',
-  mug_giant: 'Chope du Géant',
-  thimble: 'Dé de la Fée',
-  flute: 'Flûte',
-  coconut: 'Noix de coco',
-  teacup: 'Tasse',
-  goblet: 'Calice',
-  tankard: 'Chope robuste',
+  pint: 'Pint',
+  mug_giant: "Giant's Mug",
+  thimble: "Fairy's Thimble",
+  flute: 'Flute',
+  coconut: 'Coconut',
+  teacup: 'Teacup',
+  goblet: 'Goblet',
+  tankard: 'Tankard',
 };
 
 export interface ShelfActions {
@@ -35,9 +35,9 @@ export function showShelf(collection: GlassModel[], actions: ShelfActions): Scre
 
   const screen = mountScreen(
     `
-    ${header('Étagère', actions.onClose)}
+    ${header('Shelf', actions.onClose)}
     <div class="card shelf">
-      <div class="shelf__count">${owned.size} / ${ALL_MODELS.length} verres parfaits</div>
+      <div class="shelf__count">${owned.size} / ${ALL_MODELS.length} perfect pours</div>
       <div class="shelf__grid">${cards}</div>
     </div>
     `,

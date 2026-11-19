@@ -23,33 +23,36 @@ interface MapMeta {
 
 /** Nom affiché et LocationId du contrat (00 §6.1), dans l'ordre des lieux de map_meta.json. */
 const LOCATION_IDS: Record<number, { key: LocationId; name: string }> = {
-  1: { key: 'cafe', name: 'Café de Minuit' },
-  2: { key: 'beach', name: 'La Plage' },
-  3: { key: 'chalet', name: 'Le Chalet' },
-  4: { key: 'fair', name: 'La Fête foraine' },
-  5: { key: 'pirate', name: 'Le Bateau pirate' },
-  6: { key: 'castle', name: 'Le Château hanté' },
+  1: { key: 'cafe', name: 'Midnight Café' },
+  2: { key: 'beach', name: 'Beach Bar' },
+  3: { key: 'chalet', name: 'Mountain Chalet' },
+  4: { key: 'fair', name: 'Funfair' },
+  5: { key: 'pirate', name: 'Pirate Ship' },
+  6: { key: 'castle', name: 'Haunted Castle' },
 };
 const LOC_COLORS = ['#c9573f', '#2f9e95', '#5679c4', '#d79a1e', '#8a5a33', '#7c4bb8'];
 const MAP_URL = '/assets/map/';
 
-// Préréglage « golden » du viewer : l'île au coucher du soleil (brief 02 « Ta mission »).
+// Préréglage « night » du viewer (ambiance par défaut) : ciel indigo étoilé, mer sombre,
+// fenêtres et lanternes ambrées, phare bien visible. Le nom GOLDEN est gardé pour le code.
 const GOLDEN = {
-  sunDir: new THREE.Vector3(-0.62, 0.33, 0.48).normalize(),
-  sun: new THREE.Color('#ffc28a'),
-  sunI: 2.6,
-  hemiSky: new THREE.Color('#ffdcb8'),
-  hemiGround: new THREE.Color('#b68e6a'),
-  hemiI: 0.95,
-  zenith: new THREE.Color('#5f86cc'),
-  horizon: new THREE.Color('#ffcf9f'),
-  fog: 0.0021,
-  emissive: 1.2,
-  deep: new THREE.Color('#246f8c'),
-  shallow: new THREE.Color('#5fc6b9'),
-  beam: 0.1,
-  glow: 1.0,
+  sunDir: new THREE.Vector3(0.35, 0.6, -0.55).normalize(),
+  sun: new THREE.Color('#a9bdff'),
+  sunI: 0.6,
+  hemiSky: new THREE.Color('#41558f'),
+  hemiGround: new THREE.Color('#1a2133'),
+  hemiI: 0.55,
+  zenith: new THREE.Color('#0a1330'),
+  horizon: new THREE.Color('#2c3c69'),
+  fog: 0.0026,
+  emissive: 2.4,
+  deep: new THREE.Color('#0c2a44'),
+  shallow: new THREE.Color('#1d5a6a'),
+  beam: 0.42,
+  glow: 0.3,
+  stars: 1,
 };
+const AMBER = 0xffb45a;
 
 const NOISE = `
   float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7)))*43758.5453); }
@@ -146,6 +149,8 @@ interface MapLocation {
   meshes: THREE.Mesh[];
   fog: THREE.Group;
   el: HTMLButtonElement;
+  size?: { w: number; h: number };
+  lift?: number;
 }
 
 function softTexture(): THREE.CanvasTexture {
@@ -259,7 +264,7 @@ export async function loadMap(
       uHorizon: { value: GOLDEN.horizon.clone() },
       uSunDir: { value: GOLDEN.sunDir.clone() },
       uSunColor: { value: GOLDEN.sun.clone() },
-      uStars: { value: 0 },
+      uStars: { value: GOLDEN.stars },
       uGlow: { value: GOLDEN.glow },
     },
     vertexShader: `varying vec3 vDir; void main(){ vDir = normalize(position); gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.); gl_Position.z = gl_Position.w; }`,
@@ -309,6 +314,7 @@ export async function loadMap(
   WU.uShallow.value.copy(GOLDEN.shallow);
   WU.uFogColor.value.copy(GOLDEN.horizon);
   WU.uFogDensity.value = GOLDEN.fog;
+  WU.uNight.value = GOLDEN.stars;
 
   // --- l'île -----------------------------------------------------------------------
   add(island);
@@ -394,6 +400,7 @@ export async function loadMap(
   let flight: { p0: THREE.Vector3; t0: THREE.Vector3; p1: THREE.Vector3; t1: THREE.Vector3; t: number; dur: number; then?: () => void } | null = null;
   const path = meta.path.map((p) => new THREE.Vector3(...p));
   const walker = { f: 0, target: 0 };
+  let selected: MapLocation | null = null;
 
   const locations: MapLocation[] = [];
   for (const L of meta.locations) {
@@ -410,6 +417,14 @@ export async function loadMap(
     });
 
     const camTarget = worldOf(`CAMT_${L.id}`, L.camTarget);
+    // lumière ambrée des fenêtres / lanternes du lieu, contre la mer indigo
+    const warm = add(new THREE.PointLight(AMBER, mobile ? 35 : 50, 28, 1.6));
+    warm.position.copy(camTarget).add(new THREE.Vector3(0, 3, 0));
+    const halo = add(
+      new THREE.Sprite(new THREE.SpriteMaterial({ map: soft, color: AMBER, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, depthWrite: false })),
+    );
+    halo.position.copy(warm.position);
+    halo.scale.setScalar(12);
     const fog = add(new THREE.Group());
     for (let i = 0; i < 9; i++) {
       const s = new THREE.Sprite(
@@ -429,9 +444,10 @@ export async function loadMap(
     el.className = `map-pin${locked ? ' map-pin--locked' : ''}`;
     if (!locked) el.style.setProperty('--c', LOC_COLORS[L.id - 1] ?? '#e0703c');
     el.innerHTML = locked
-      ? `<span class="map-pin__badge"><span class="map-pin__num">🔒</span><span class="map-pin__name">${info.name}<small>Bientôt</small></span></span><span class="map-pin__stem"></span><span class="map-pin__dot"></span>`
-      : `<span class="map-pin__badge"><span class="map-pin__num">${L.id}</span><span class="map-pin__name">${info.name}</span></span><span class="map-pin__stem"></span><span class="map-pin__dot"></span>`;
+      ? `<span class="map-pin__badge"><span class="map-pin__num">🔒</span><span class="map-pin__name">${info.name}<small>Coming soon</small></span></span><span class="map-pin__stem"></span><span class="map-pin__dot"></span>`
+      : `<span class="map-pin__badge"><span class="map-pin__num">${L.id}</span><span class="map-pin__name" data-name>${info.name}</span></span><span class="map-pin__stem"></span><span class="map-pin__dot"></span>`;
     el.disabled = locked;
+    el.setAttribute('aria-label', info.name);
     overlay.appendChild(el);
 
     const loc: MapLocation = {
@@ -447,12 +463,32 @@ export async function loadMap(
       el,
     };
     if (!locked) {
+      // 1er tap : la caméra vole vers le lieu et la pastille devient « Enter ».
+      // 2e tap (sur « Enter ») : on entre dans le lieu.
       el.addEventListener('click', (ev) => {
         ev.stopPropagation();
-        goTo(loc, () => onEnter(loc.key));
+        if (selected === loc && !flight) {
+          onEnter(loc.key);
+          return;
+        }
+        select(null);
+        goTo(loc, () => select(loc));
       });
     }
     locations.push(loc);
+  }
+  function select(loc: MapLocation | null): void {
+    if (selected) {
+      selected.el.classList.remove('map-pin--selected');
+      const n = selected.el.querySelector('[data-name]');
+      if (n) n.textContent = LOCATION_IDS[selected.id]?.name ?? '';
+    }
+    selected = loc;
+    if (loc) {
+      loc.el.classList.add('map-pin--selected');
+      const n = loc.el.querySelector('[data-name]');
+      if (n) n.textContent = 'Enter ▸';
+    }
   }
   const first = locations[0];
   walker.f = walker.target = first ? first.pathIndex : 0;
@@ -547,6 +583,7 @@ export async function loadMap(
   const cloudMat = new THREE.MeshLambertMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.55, flatShading: true, transparent: true, opacity: 0.9, fog: true });
   cloudMat.color.setRGB(1, 1, 1).lerp(GOLDEN.horizon, 0.3);
   cloudMat.emissive.copy(GOLDEN.horizon).lerp(new THREE.Color(1, 1, 1), 0.5);
+  cloudMat.emissiveIntensity = 0.55 * (1 - 0.75 * GOLDEN.stars);
   const clouds: THREE.Group[] = [];
   for (let i = 0; i < (mobile ? 8 : 14); i++) {
     const c = add(new THREE.Group());
@@ -767,6 +804,9 @@ export async function loadMap(
     // pastilles : projetées à l'écran, à moitié transparentes si l'île les cache
     const rect = renderer.domElement.getBoundingClientRect();
     frameNo++;
+    if (frameNo % 30 === 1) for (const L of locations) L.size = { w: L.el.offsetWidth, h: L.el.querySelector('.map-pin__badge')?.clientHeight ?? 36 };
+    const placed: { x: number; top: number; w: number; h: number }[] = [];
+    const screen: { L: MapLocation; x: number; y: number }[] = [];
     for (const L of locations) {
       if (frameNo % 12 === 0 && occluders.length) {
         const d = tmp.copy(L.pin).sub(camera.position);
@@ -781,10 +821,31 @@ export async function loadMap(
       const behind = tmp.z > 1;
       L.el.style.display = behind ? 'none' : 'flex';
       if (!behind) {
-        const x = rect.left + (tmp.x * 0.5 + 0.5) * rect.width;
-        const y = rect.top + (-tmp.y * 0.5 + 0.5) * rect.height;
-        L.el.style.transform = `translate(${x}px, ${y}px) translate(-50%, -100%)`;
+        screen.push({ L, x: rect.left + (tmp.x * 0.5 + 0.5) * rect.width, y: rect.top + (-tmp.y * 0.5 + 0.5) * rect.height });
       }
+    }
+    // Pas de chevauchement : en partant du bas de l'écran, une pastille qui touche une
+    // autre déjà placée monte, sa tige s'allonge (lissé pour ne pas trembler).
+    screen.sort((a, b) => b.y - a.y);
+    for (const s of screen) {
+      const { w, h } = s.L.size ?? { w: 120, h: 36 };
+      const base = s.y - 25; // bas de la pastille avec la tige normale (16 px + point 9 px)
+      let top = base - h;
+      for (let moved = true, n = 0; moved && n < 8; n++) {
+        moved = false;
+        for (const p of placed) {
+          if (Math.abs(p.x - s.x) < (p.w + w) / 2 + 4 && top < p.top + p.h + 4 && top + h > p.top - 4) {
+            top = p.top - h - 6;
+            moved = true;
+          }
+        }
+      }
+      placed.push({ x: s.x, top, w, h });
+      const want = base - h - top;
+      s.L.lift = (s.L.lift ?? 0) + (want - (s.L.lift ?? 0)) * Math.min(1, dt * 12);
+      const stem = s.L.el.querySelector<HTMLElement>('.map-pin__stem');
+      if (stem) stem.style.height = `${16 + s.L.lift}px`;
+      s.L.el.style.transform = `translate(${s.x}px, ${s.y}px) translate(-50%, -100%)`;
     }
   });
 

@@ -136,7 +136,7 @@ export function showTutorialIfFirstTime(options: TutorialOptions): Tutorial | nu
   const container = options.container ?? document.body;
   const overlay = document.createElement('div');
   overlay.setAttribute('role', 'img');
-  overlay.setAttribute('aria-label', 'Appuie pour verser, relâche pour arrêter'); // for screen readers only
+  overlay.setAttribute('aria-label', 'Hold to pour, release to stop'); // for screen readers only
   Object.assign(overlay.style, {
     position: 'fixed',
     left: '0',

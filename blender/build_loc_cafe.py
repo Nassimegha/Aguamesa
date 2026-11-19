@@ -143,6 +143,40 @@ def build():
     made.append(add_cone("CatEarL", 0.018, 0.03, (0.915, -0.84, 1.445), P["cat_dark"]))
     made.append(add_cone("CatEarR", 0.018, 0.03, (0.945, -0.84, 1.445), P["cat_dark"]))
 
+    # ---- art pass: mahogany, brass, Edison bulbs, back-bar floor ----
+    mahog = hexlin("#6A2E1F")
+    brass = hexlin("#C8963E")
+    edison = hexlin("#FFB45A")
+    # raised floor behind the bar: customers stand on it (no more dark gap under them)
+    made.append(add_box("BackBarFloor", (2.1, 0.86, 0.04), (0, -0.5, -0.36), P["wood_dark"]))
+    made.append(add_box("Wainscot", (2.1, 0.06, 0.5), (0, -0.88, -0.1), mahog))
+    # mahogany counter edge + brass foot rail on the player side
+    made.append(add_box("CounterEdge", (1.34, 0.03, 0.035), (0, 0.345, -0.005), mahog))
+    made.append(add_cylinder("BrassRail", 0.012, 1.3, (0, 0.4, -0.7), brass, rot=(0, math.pi / 2, 0)))
+    for x in (-0.55, 0.0, 0.55):
+        made.append(add_cylinder(f"RailPost{x}", 0.008, 0.14, (x, 0.37, -0.65), brass, rot=(math.pi / 2, 0, 0)))
+    # brass espresso machine on the counter, left of the glass
+    made.append(add_box("EspressoBody", (0.24, 0.16, 0.22), (-0.48, 0.05, 0.11), brass))
+    made.append(add_box("EspressoTop", (0.26, 0.18, 0.025), (-0.48, 0.05, 0.235), mahog))
+    made.append(add_cylinder("EspressoBoiler", 0.06, 0.2, (-0.48, 0.05, 0.3), brass, rot=(0, math.pi / 2, 0)))
+    made.append(add_sphere("EspressoDome", 0.035, (-0.48, 0.05, 0.37), brass))
+    for k, x in enumerate((-0.53, -0.43)):
+        made.append(add_cylinder(f"Spout{k}", 0.012, 0.05, (x, 0.14, 0.06), hexlin("#3a3430")))
+        made.append(add_cylinder(f"Cup{k}", 0.022, 0.03, (x, 0.15, 0.015), P["glow_core"]))
+    made.append(add_sphere("EspressoGauge", 0.022, (-0.48, 0.135, 0.17), P["glow_core"], emission=0.6, scale=(1, 0.3, 1)))
+    # row of glowing Edison bulbs above the bar
+    for k, x in enumerate((-0.6, -0.2, 0.2, 0.6)):
+        drop = 0.32 + 0.08 * (k % 2)
+        made.append(add_cylinder(f"BulbCord{k}", 0.005, drop, (x, -0.3, 1.65 - drop / 2), P["metal"]))
+        made.append(add_cylinder(f"BulbCap{k}", 0.014, 0.03, (x, -0.3, 1.65 - drop), brass))
+        made.append(add_sphere(f"Edison{k}", 0.032, (x, -0.3, 1.65 - drop - 0.04), edison, emission=6.0, scale=(1, 1, 1.35)))
+    # warm sconces either side of the window
+    for k, x in enumerate((0.2, 0.9)):
+        made.append(add_sphere(f"Sconce{k}", 0.04, (x, -0.86, 0.95), edison, emission=3.0))
+    # mug stack on the right of the counter
+    for k in range(3):
+        made.append(add_cylinder(f"Mug{k}", 0.035, 0.07, (0.5 + 0.08 * k, 0.02, 0.035), hexlin("#EFE2C2")))
+
     # ---- markers for location.ts ----
     add_empty("GLASS_ANCHOR", (0, 0, 0))
     add_empty("CAMERA_POS", (0, 1.7, 1.0))
