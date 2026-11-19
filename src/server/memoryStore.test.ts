@@ -39,6 +39,12 @@ describe('MemoryStore', () => {
     assert.equal(await store.zScore('z', 'a'), 20);
   });
 
+  test('incrBy accumulates on strings', async () => {
+    const store = new MemoryStore();
+    assert.equal(await store.incrBy('n', 1), 1);
+    assert.equal(await store.incrBy('n', 4), 5);
+  });
+
   test('mGet returns values with null for missing keys', async () => {
     const store = new MemoryStore();
     await store.set('a', '1');

@@ -68,6 +68,7 @@ export type StoreZEntry = {
 export type Store = {
   get(key: string): Promise<string | undefined>;
   set(key: string, value: string): Promise<unknown>;
+  incrBy(key: string, value: number): Promise<number>;
   /** Set hash field only if absent. Returns 1 when set, 0 when it existed. */
   hSetNX(key: string, field: string, value: string): Promise<number>;
   hGet(key: string, field: string): Promise<string | undefined>;

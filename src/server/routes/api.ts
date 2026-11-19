@@ -17,6 +17,7 @@ import { liveDrinkForDay, withLiveDrink } from '../drink';
 import { refreshFlair } from '../flair';
 import { getLeaderboard, type BoardScope } from '../leaderboard';
 import { finishNight } from '../night';
+import { checkRateLimit, type RateLimit } from '../rateLimit';
 import { shareNight } from '../share';
 import { createCommentPoster, createFlairSetter } from '../social';
 import { getLevel, starsForTotal } from '../levels';
@@ -31,6 +32,35 @@ const commentPoster = createCommentPoster();
 const flairSetter = createFlairSetter();
 
 export const api = new Hono();
+
+/**
+ * Per-user, per-minute budgets (Task 6). Generous for real play — 5
+ * pours plus retries and double taps fit easily — tight enough to blunt
+ * farms and stuck retry loops. Logged-out traffic skips this: every
+ * route 401s it anyway.
+ */
+const RATE_LIMITS: Record<string, RateLimit> = {
+  '/init': { limit: 60, windowSec: 60 },
+  '/pour': { limit: 30, windowSec: 60 },
+  '/night/finish': { limit: 10, windowSec: 60 },
+  '/share': { limit: 5, windowSec: 60 },
+  '/leaderboard': { limit: 60, windowSec: 60 },
+  '/level/complete': { limit: 30, windowSec: 60 },
+  '/decor/buy': { limit: 30, windowSec: 60 },
+};
+
+api.use(async (c, next) => {
+  const username = loggedInUser();
+  const route = c.req.path.replace(/^\/api/, '');
+  const rule = RATE_LIMITS[route];
+  if (username !== undefined && rule !== undefined) {
+    const check = await checkRateLimit(store, username, route, rule);
+    if (!check.allowed) {
+      return c.json({ error: 'Too many requests, slow down a little' }, 429);
+    }
+  }
+  await next();
+});
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;

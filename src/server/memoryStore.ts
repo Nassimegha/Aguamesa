@@ -18,6 +18,12 @@ export class MemoryStore implements Store {
     return 'OK';
   }
 
+  async incrBy(key: string, value: number): Promise<number> {
+    const next = (Number(this.strings.get(key) ?? '0') || 0) + value;
+    this.strings.set(key, String(next));
+    return next;
+  }
+
   async hSetNX(key: string, field: string, value: string): Promise<number> {
     let hash = this.hashes.get(key);
     if (hash === undefined) {
