@@ -219,6 +219,9 @@ async function playTonight(today: DailyService, visitLocation?: string): Promise
   await playNight({
     today,
     api: gameApi,
+    // Un seul essai par jour (00 §1) : les verres déjà versés sont sautés, sinon le
+    // serveur refuserait le versement après que le joueur a rejoué le verre pour rien.
+    playedToday: player?.playedToday ?? [],
     playGlass: s.stage.playGlass,
     events: {
       onGlassStart: s.onGlassStart,
