@@ -4,9 +4,11 @@
     "outDir": "../dist/types/server",
     "tsBuildInfoFile": "../dist/types/server/tsconfig.tsbuildinfo",
     "customConditions": [],
-    "types": ["node"],
+    "types": [
+      "node"
+    ],
     "exactOptionalPropertyTypes": false,
-    "rootDir": "../src/server"
+    "rootDir": ".."
   },
   "include": ["../src/server/**/*"],
   "exclude": [],
@@ -14,5 +16,8 @@
     {
       "path": "./tsconfig.shared.json"
     }
+  ],
+  "files": [
+    "../content/days/2026-11-24.json"
   ]
 }
