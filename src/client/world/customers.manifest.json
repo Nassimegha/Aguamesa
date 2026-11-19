@@ -1,0 +1,1262 @@
+[
+ {
+  "id": "giant",
+  "name": "The Gentle Giant",
+  "location": "cafe",
+  "size": "tall",
+  "line": "The biggest mug you have, please!"
+ },
+ {
+  "id": "fairy",
+  "name": "Pip the Fairy",
+  "location": "cafe",
+  "size": "small",
+  "line": "Just a tiny drop... exactly to the line!"
+ },
+ {
+  "id": "ghost",
+  "name": "Boo",
+  "location": "cafe",
+  "size": "floater",
+  "line": "Boo... I mean, hello. Something warm?"
+ },
+ {
+  "id": "wizard",
+  "name": "Old Merlo",
+  "location": "cafe",
+  "size": "tall",
+  "line": "Pour wisely, young barista."
+ },
+ {
+  "id": "owl_professor",
+  "name": "Professor Hoot",
+  "location": "cafe",
+  "size": "tall",
+  "line": "Precisely 0.78 of a cup, if you please."
+ },
+ {
+  "id": "cat_poet",
+  "name": "Noir the Poet",
+  "location": "cafe",
+  "size": "tall",
+  "line": "Pour me something... melancholic."
+ },
+ {
+  "id": "raccoon",
+  "name": "Bandit",
+  "location": "cafe",
+  "size": "tall",
+  "line": "I'm not stealing the coaster. Probably."
+ },
+ {
+  "id": "fox_detective",
+  "name": "Inspector Vix",
+  "location": "cafe",
+  "size": "tall",
+  "line": "The clue is in the foam."
+ },
+ {
+  "id": "vampire",
+  "name": "Count Velour",
+  "location": "cafe",
+  "size": "tall",
+  "line": "Something red. Just to look at."
+ },
+ {
+  "id": "student",
+  "name": "Sleepy Sam",
+  "location": "cafe",
+  "size": "tall",
+  "line": "Exams tomorrow. Make it strong."
+ },
+ {
+  "id": "jazz",
+  "name": "Smooth Lou",
+  "location": "cafe",
+  "size": "tall",
+  "line": "One more for the last set."
+ },
+ {
+  "id": "moth",
+  "name": "Lumi the Moth",
+  "location": "cafe",
+  "size": "small",
+  "line": "Is that a lamp? Oh. Oh, it's lovely."
+ },
+ {
+  "id": "mouse_chef",
+  "name": "Chef Crumb",
+  "location": "cafe",
+  "size": "small",
+  "line": "A thimble of cream. For research."
+ },
+ {
+  "id": "robot",
+  "name": "Unit B-12",
+  "location": "cafe",
+  "size": "tall",
+  "line": "Beep. Optimal fill level requested."
+ },
+ {
+  "id": "astronomer",
+  "name": "Stella",
+  "location": "cafe",
+  "size": "tall",
+  "line": "Pour it like a shooting star."
+ },
+ {
+  "id": "firefly",
+  "name": "Flick",
+  "location": "cafe",
+  "size": "small",
+  "line": "Bzzt! Half caf, half glow."
+ },
+ {
+  "id": "moon_rabbit",
+  "name": "Mochi",
+  "location": "cafe",
+  "size": "tall",
+  "line": "Under a full moon, everything tastes sweeter."
+ },
+ {
+  "id": "nurse",
+  "name": "Night Nurse Ana",
+  "location": "cafe",
+  "size": "tall",
+  "line": "Twelve-hour shift. Fill it up."
+ },
+ {
+  "id": "taxi",
+  "name": "Rocco the Cabbie",
+  "location": "cafe",
+  "size": "tall",
+  "line": "Meter's running, pal. Quick one."
+ },
+ {
+  "id": "bear_nightcap",
+  "name": "Barnaby",
+  "location": "cafe",
+  "size": "tall",
+  "line": "Warm milk. With honey. Lots."
+ },
+ {
+  "id": "sleepwalker",
+  "name": "Dozy Dot",
+  "location": "cafe",
+  "size": "tall",
+  "line": "Zzz... same as yesterday... zzz."
+ },
+ {
+  "id": "crow",
+  "name": "Corvin",
+  "location": "cafe",
+  "size": "tall",
+  "line": "Shiny glass. I approve."
+ },
+ {
+  "id": "mime",
+  "name": "Marcel",
+  "location": "cafe",
+  "size": "tall",
+  "line": "..."
+ },
+ {
+  "id": "apprentice_witch",
+  "name": "Hazel",
+  "location": "cafe",
+  "size": "tall",
+  "line": "Not too much! Last time the cauldron exploded."
+ },
+ {
+  "id": "werewolf",
+  "name": "Sir Howl",
+  "location": "cafe",
+  "size": "tall",
+  "line": "Full moon tonight. Make it a double."
+ },
+ {
+  "id": "snail",
+  "name": "Shelly",
+  "location": "cafe",
+  "size": "small",
+  "line": "No rush. Take your time. Really."
+ },
+ {
+  "id": "radio_host",
+  "name": "DJ Night",
+  "location": "cafe",
+  "size": "tall",
+  "line": "You're live on Midnight FM!"
+ },
+ {
+  "id": "cloud",
+  "name": "Nimbus",
+  "location": "cafe",
+  "size": "floater",
+  "line": "Feeling a little drizzly tonight."
+ },
+ {
+  "id": "gnome",
+  "name": "Pebble",
+  "location": "cafe",
+  "size": "small",
+  "line": "Ho! A gnome-sized pour, please."
+ },
+ {
+  "id": "bat",
+  "name": "Velvet",
+  "location": "cafe",
+  "size": "small",
+  "line": "Upside-down service, if possible."
+ },
+ {
+  "id": "surfer",
+  "name": "Kai the Surfer",
+  "location": "beach",
+  "size": "tall",
+  "line": "Duuude. Fill it like a perfect wave."
+ },
+ {
+  "id": "crab_mister",
+  "name": "Mister Crab",
+  "location": "beach",
+  "size": "small",
+  "line": "Snip snip! Precisely, please."
+ },
+ {
+  "id": "mermaid",
+  "name": "Marina",
+  "location": "beach",
+  "size": "tall",
+  "line": "Salt water? No thanks. Something sparkly."
+ },
+ {
+  "id": "seagull",
+  "name": "Gully",
+  "location": "beach",
+  "size": "small",
+  "line": "Mine? Mine? Mine!"
+ },
+ {
+  "id": "turtle",
+  "name": "Old Tortuga",
+  "location": "beach",
+  "size": "tall",
+  "line": "Slowly now. The best drinks take their time."
+ },
+ {
+  "id": "octopus",
+  "name": "Inka",
+  "location": "beach",
+  "size": "tall",
+  "line": "I'll take eight. Kidding. One."
+ },
+ {
+  "id": "lifeguard",
+  "name": "Coral",
+  "location": "beach",
+  "size": "tall",
+  "line": "No splashing on my watch!"
+ },
+ {
+  "id": "tourist",
+  "name": "Gary",
+  "location": "beach",
+  "size": "tall",
+  "line": "Is this the famous bar? Selfie first!"
+ },
+ {
+  "id": "dolphin",
+  "name": "Splash",
+  "location": "beach",
+  "size": "tall",
+  "line": "Eee-eee! (That means 'extra bubbles'.)"
+ },
+ {
+  "id": "shark",
+  "name": "Finn",
+  "location": "beach",
+  "size": "tall",
+  "line": "I promise I only bite the lime."
+ },
+ {
+  "id": "parrot",
+  "name": "Polly",
+  "location": "beach",
+  "size": "small",
+  "line": "Polly wants a perfect pour!"
+ },
+ {
+  "id": "coconut",
+  "name": "Coco",
+  "location": "beach",
+  "size": "small",
+  "line": "Put a little umbrella in it?"
+ },
+ {
+  "id": "pineapple",
+  "name": "Pina",
+  "location": "beach",
+  "size": "small",
+  "line": "Something tropical. Shocking, I know."
+ },
+ {
+  "id": "flamingo",
+  "name": "Rosa",
+  "location": "beach",
+  "size": "tall",
+  "line": "Pink, please. Everything pink."
+ },
+ {
+  "id": "hermit",
+  "name": "Hermie",
+  "location": "beach",
+  "size": "small",
+  "line": "Nice glass. Is it... available? To live in?"
+ },
+ {
+  "id": "sand_knight",
+  "name": "Sir Sandy",
+  "location": "beach",
+  "size": "tall",
+  "line": "I hold this beach until high tide!"
+ },
+ {
+  "id": "starfish",
+  "name": "Starla",
+  "location": "beach",
+  "size": "small",
+  "line": "I'm a star. Pour like it."
+ },
+ {
+  "id": "otter",
+  "name": "Otto",
+  "location": "beach",
+  "size": "tall",
+  "line": "I brought my own shell. Fill it?"
+ },
+ {
+  "id": "surfer_girl",
+  "name": "Leilani",
+  "location": "beach",
+  "size": "tall",
+  "line": "Sunset's in five. Make it golden."
+ },
+ {
+  "id": "jellyfish",
+  "name": "Jello",
+  "location": "beach",
+  "size": "floater",
+  "line": "Bloop. Something wobbly, please."
+ },
+ {
+  "id": "pelican",
+  "name": "Pete",
+  "location": "beach",
+  "size": "tall",
+  "line": "I'll hold it in my beak for later."
+ },
+ {
+  "id": "beach_bum",
+  "name": "Dude Rick",
+  "location": "beach",
+  "size": "tall",
+  "line": "Whatever's coldest, man."
+ },
+ {
+  "id": "gelato",
+  "name": "Gelato Gina",
+  "location": "beach",
+  "size": "tall",
+  "line": "You pour, I scoop. Deal?"
+ },
+ {
+  "id": "seal",
+  "name": "Sealy",
+  "location": "beach",
+  "size": "tall",
+  "line": "Arf! Arf! (Two please.)"
+ },
+ {
+  "id": "sun",
+  "name": "Sunny",
+  "location": "beach",
+  "size": "floater",
+  "line": "Don't mind me, just warming up."
+ },
+ {
+  "id": "puffer",
+  "name": "Puff",
+  "location": "beach",
+  "size": "small",
+  "line": "Don't startle me. I puff."
+ },
+ {
+  "id": "walrus",
+  "name": "Wally",
+  "location": "beach",
+  "size": "tall",
+  "line": "Splendid evening for a tall one."
+ },
+ {
+  "id": "scuba",
+  "name": "Diver Dee",
+  "location": "beach",
+  "size": "tall",
+  "line": "Down the hatch. Like a dive."
+ },
+ {
+  "id": "palm_spirit",
+  "name": "Palmy",
+  "location": "beach",
+  "size": "floater",
+  "line": "Rustle rustle. A coconut water?"
+ },
+ {
+  "id": "lobster",
+  "name": "Lord Lobster",
+  "location": "beach",
+  "size": "tall",
+  "line": "A refined pour for a refined crustacean."
+ },
+ {
+  "id": "yeti",
+  "name": "The Yeti",
+  "location": "chalet",
+  "size": "tall",
+  "line": "Something warm. I'm always cold. Ironically."
+ },
+ {
+  "id": "skier",
+  "name": "Ski Sam",
+  "location": "chalet",
+  "size": "tall",
+  "line": "Fresh powder out there! Pour me some."
+ },
+ {
+  "id": "grandma_bear",
+  "name": "Grandma Bear",
+  "location": "chalet",
+  "size": "tall",
+  "line": "Oh, sweetie, just to the line."
+ },
+ {
+  "id": "penguin",
+  "name": "Pengo",
+  "location": "chalet",
+  "size": "small",
+  "line": "Brrr. Something hot. Very hot."
+ },
+ {
+  "id": "arctic_fox",
+  "name": "Frost",
+  "location": "chalet",
+  "size": "tall",
+  "line": "Cocoa. Extra marshmallows. Don't judge."
+ },
+ {
+  "id": "moose",
+  "name": "Mister Moose",
+  "location": "chalet",
+  "size": "tall",
+  "line": "Mind the antlers, I always do."
+ },
+ {
+  "id": "snowman",
+  "name": "Frosty Fred",
+  "location": "chalet",
+  "size": "tall",
+  "line": "Nothing too warm! I'm fragile."
+ },
+ {
+  "id": "reindeer",
+  "name": "Rudi",
+  "location": "chalet",
+  "size": "tall",
+  "line": "Long night of deliveries ahead."
+ },
+ {
+  "id": "mountaineer",
+  "name": "Edmund",
+  "location": "chalet",
+  "size": "tall",
+  "line": "Summit tomorrow. Fuel me up."
+ },
+ {
+  "id": "snowy_owl",
+  "name": "Snowy",
+  "location": "chalet",
+  "size": "small",
+  "line": "Hoo... hoo's pouring tonight?"
+ },
+ {
+  "id": "hot_cocoa",
+  "name": "Cocoa",
+  "location": "chalet",
+  "size": "small",
+  "line": "Am I... a drink ordering a drink?"
+ },
+ {
+  "id": "lumberjack",
+  "name": "Big Jack",
+  "location": "chalet",
+  "size": "tall",
+  "line": "Chopped wood all day. Pour a tall one."
+ },
+ {
+  "id": "skater",
+  "name": "Glide",
+  "location": "chalet",
+  "size": "tall",
+  "line": "One perfect spin. One perfect pour."
+ },
+ {
+  "id": "snow_hare",
+  "name": "Snow Hare",
+  "location": "chalet",
+  "size": "tall",
+  "line": "Quick quick! Before I hop off!"
+ },
+ {
+  "id": "wolf",
+  "name": "Lupo",
+  "location": "chalet",
+  "size": "tall",
+  "line": "Ahh-wooo. Warm cider, please."
+ },
+ {
+  "id": "polar_bear",
+  "name": "Polar Pat",
+  "location": "chalet",
+  "size": "tall",
+  "line": "Ice? No thanks. Plenty outside."
+ },
+ {
+  "id": "husky",
+  "name": "Husk",
+  "location": "chalet",
+  "size": "tall",
+  "line": "Pulled a sled all day. Woof."
+ },
+ {
+  "id": "alp_gnome",
+  "name": "Alpi",
+  "location": "chalet",
+  "size": "small",
+  "line": "A tiny schnapps of cocoa, ja?"
+ },
+ {
+  "id": "mountain_goat",
+  "name": "Billy",
+  "location": "chalet",
+  "size": "tall",
+  "line": "Climbed up here for this. Worth it?"
+ },
+ {
+  "id": "snowflake",
+  "name": "Flurry",
+  "location": "chalet",
+  "size": "small",
+  "line": "Chill. Literally."
+ },
+ {
+  "id": "old_skier",
+  "name": "Old Olaf",
+  "location": "chalet",
+  "size": "tall",
+  "line": "In my day we skied uphill. Both ways."
+ },
+ {
+  "id": "baker",
+  "name": "Strudel Sue",
+  "location": "chalet",
+  "size": "tall",
+  "line": "Fresh strudel, fresh pour. Perfect."
+ },
+ {
+  "id": "ice_golem",
+  "name": "Glacier",
+  "location": "chalet",
+  "size": "tall",
+  "line": "Cold. Clear. Precise."
+ },
+ {
+  "id": "cuckoo",
+  "name": "Kuku",
+  "location": "chalet",
+  "size": "small",
+  "line": "Cuckoo! It's pouring o'clock!"
+ },
+ {
+  "id": "ermine",
+  "name": "Ermin",
+  "location": "chalet",
+  "size": "small",
+  "line": "A small, elegant measure."
+ },
+ {
+  "id": "snowboarder",
+  "name": "Shred",
+  "location": "chalet",
+  "size": "tall",
+  "line": "Gnarly night. Fill it to the line, bro."
+ },
+ {
+  "id": "yodeler",
+  "name": "Heidi",
+  "location": "chalet",
+  "size": "tall",
+  "line": "Yodel-ay-hee-hoo! One cocoa!"
+ },
+ {
+  "id": "st_bernard",
+  "name": "Bernie",
+  "location": "chalet",
+  "size": "tall",
+  "line": "I carry rescue cocoa. You carry the rest."
+ },
+ {
+  "id": "aurora",
+  "name": "Aurora",
+  "location": "chalet",
+  "size": "floater",
+  "line": "Shimmer... shimmer... a green tea?"
+ },
+ {
+  "id": "marmot",
+  "name": "Marty",
+  "location": "chalet",
+  "size": "small",
+  "line": "I just woke up. Is it spring?"
+ },
+ {
+  "id": "clown",
+  "name": "Bobo",
+  "location": "fair",
+  "size": "tall",
+  "line": "Honk honk! Make it fizzy!"
+ },
+ {
+  "id": "acrobat",
+  "name": "Aria",
+  "location": "fair",
+  "size": "tall",
+  "line": "I'll balance it on my nose afterwards."
+ },
+ {
+  "id": "juggler",
+  "name": "Juno",
+  "location": "fair",
+  "size": "tall",
+  "line": "Three glasses in the air, one on the counter."
+ },
+ {
+  "id": "strongman",
+  "name": "Brutus",
+  "location": "fair",
+  "size": "tall",
+  "line": "I'll lift the glass. You pour."
+ },
+ {
+  "id": "fortune_teller",
+  "name": "Madame Zora",
+  "location": "fair",
+  "size": "tall",
+  "line": "I see... a perfect pour in your future."
+ },
+ {
+  "id": "magician",
+  "name": "The Great Ozzo",
+  "location": "fair",
+  "size": "tall",
+  "line": "Watch closely... nothing up my sleeve."
+ },
+ {
+  "id": "balloon_dog",
+  "name": "Twisty",
+  "location": "fair",
+  "size": "small",
+  "line": "Squeak squeak! (Careful, I pop.)"
+ },
+ {
+  "id": "popcorn",
+  "name": "Pop",
+  "location": "fair",
+  "size": "small",
+  "line": "Salty or sweet? Both!"
+ },
+ {
+  "id": "cotton_candy",
+  "name": "Fluff",
+  "location": "fair",
+  "size": "floater",
+  "line": "Sugar, sugar, sugar!"
+ },
+ {
+  "id": "kid",
+  "name": "Timmy",
+  "location": "fair",
+  "size": "tall",
+  "line": "Can I have the BIG cup? Pleeeease?"
+ },
+ {
+  "id": "ringmaster",
+  "name": "Ringo",
+  "location": "fair",
+  "size": "tall",
+  "line": "Ladies and gentlemen... the POUR!"
+ },
+ {
+  "id": "lion",
+  "name": "Leo",
+  "location": "fair",
+  "size": "tall",
+  "line": "A roaring good drink, please."
+ },
+ {
+  "id": "elephant",
+  "name": "Ellie",
+  "location": "fair",
+  "size": "tall",
+  "line": "I never forget a good pour."
+ },
+ {
+  "id": "monkey",
+  "name": "Mojo",
+  "location": "fair",
+  "size": "tall",
+  "line": "Ooh ooh! Banana flavour?"
+ },
+ {
+  "id": "robot_toy",
+  "name": "Tinny",
+  "location": "fair",
+  "size": "tall",
+  "line": "Wind me up and pour me one!"
+ },
+ {
+  "id": "teddy",
+  "name": "Teddy Prize",
+  "location": "fair",
+  "size": "small",
+  "line": "I'm the grand prize. Treat me nice."
+ },
+ {
+  "id": "duck_toy",
+  "name": "Ducky",
+  "location": "fair",
+  "size": "small",
+  "line": "Quack. Floats well. Pours better."
+ },
+ {
+  "id": "hotdog",
+  "name": "Hot Dog Hal",
+  "location": "fair",
+  "size": "tall",
+  "line": "Mustard on the side of my glass?"
+ },
+ {
+  "id": "tightrope",
+  "name": "Tilly",
+  "location": "fair",
+  "size": "tall",
+  "line": "Steady... steady... perfect."
+ },
+ {
+  "id": "fire_breather",
+  "name": "Blaze",
+  "location": "fair",
+  "size": "tall",
+  "line": "Something cold. VERY cold."
+ },
+ {
+  "id": "stilts",
+  "name": "Long Larry",
+  "location": "fair",
+  "size": "tall",
+  "line": "Hello from up here!"
+ },
+ {
+  "id": "ghost_train",
+  "name": "Spooky Sue",
+  "location": "fair",
+  "size": "floater",
+  "line": "Boo! Did I scare you? A little?"
+ },
+ {
+  "id": "carousel_horse",
+  "name": "Prancer",
+  "location": "fair",
+  "size": "tall",
+  "line": "Round and round... then a drink."
+ },
+ {
+  "id": "ticket_taker",
+  "name": "Tess",
+  "location": "fair",
+  "size": "tall",
+  "line": "Ticket? Kidding. Pour away."
+ },
+ {
+  "id": "cupcake",
+  "name": "Sprinkles",
+  "location": "fair",
+  "size": "small",
+  "line": "I'm sweet enough already, but okay."
+ },
+ {
+  "id": "alien_prize",
+  "name": "Zib",
+  "location": "fair",
+  "size": "small",
+  "line": "Greetings. Your liquid is... fascinating."
+ },
+ {
+  "id": "pierrot",
+  "name": "Pierrot",
+  "location": "fair",
+  "size": "tall",
+  "line": "Sigh... make it a happy one."
+ },
+ {
+  "id": "bumper_bear",
+  "name": "Bumper",
+  "location": "fair",
+  "size": "tall",
+  "line": "Bump! Oops. Sorry. Pour please."
+ },
+ {
+  "id": "lantern_spirit",
+  "name": "Glim",
+  "location": "fair",
+  "size": "floater",
+  "line": "I light up when the pour is right."
+ },
+ {
+  "id": "pretzel",
+  "name": "Pretzel Pete",
+  "location": "fair",
+  "size": "tall",
+  "line": "Salty snack, sweet drink. Classic."
+ },
+ {
+  "id": "pirate",
+  "name": "Captain Barnacle",
+  "location": "pirate",
+  "size": "tall",
+  "line": "Fill her up, matey. No spillin'!"
+ },
+ {
+  "id": "parrot_pirate",
+  "name": "Squawk",
+  "location": "pirate",
+  "size": "small",
+  "line": "Rrraak! Pieces of eight! Pour it!"
+ },
+ {
+  "id": "skeleton_pirate",
+  "name": "Bones",
+  "location": "pirate",
+  "size": "tall",
+  "line": "Goes right through me. Pour anyway."
+ },
+ {
+  "id": "first_mate",
+  "name": "Mate Molly",
+  "location": "pirate",
+  "size": "tall",
+  "line": "Captain's orders: a full measure."
+ },
+ {
+  "id": "ship_cook",
+  "name": "Cookie",
+  "location": "pirate",
+  "size": "tall",
+  "line": "Galley's closed. Galley's thirsty."
+ },
+ {
+  "id": "octopus_pirate",
+  "name": "Captain Inky",
+  "location": "pirate",
+  "size": "tall",
+  "line": "Eight arms, zero spills. Your turn."
+ },
+ {
+  "id": "monkey_pirate",
+  "name": "Swabbie",
+  "location": "pirate",
+  "size": "small",
+  "line": "Ook! Grog! Ook!"
+ },
+ {
+  "id": "ghost_pirate",
+  "name": "Phantom Pete",
+  "location": "pirate",
+  "size": "floater",
+  "line": "Yo ho... yo ho... a ghostly grog."
+ },
+ {
+  "id": "navigator",
+  "name": "Compass Kate",
+  "location": "pirate",
+  "size": "tall",
+  "line": "Due north. Straight to the line."
+ },
+ {
+  "id": "deckhand",
+  "name": "Swab",
+  "location": "pirate",
+  "size": "tall",
+  "line": "Mopped the deck twice. I earned this."
+ },
+ {
+  "id": "crab_pirate",
+  "name": "Pinch",
+  "location": "pirate",
+  "size": "small",
+  "line": "Arr! Snip! Arr!"
+ },
+ {
+  "id": "shark_pirate",
+  "name": "Sharkey",
+  "location": "pirate",
+  "size": "tall",
+  "line": "I smell rum. Or is it cocoa?"
+ },
+ {
+  "id": "pearl_merchant",
+  "name": "Pearl",
+  "location": "pirate",
+  "size": "tall",
+  "line": "I'll pay in pearls. Fair?"
+ },
+ {
+  "id": "lookout",
+  "name": "Ned the Lookout",
+  "location": "pirate",
+  "size": "tall",
+  "line": "Land ho! And drink ho!"
+ },
+ {
+  "id": "cannoneer",
+  "name": "Boomer",
+  "location": "pirate",
+  "size": "tall",
+  "line": "BOOM! Sorry. Habit. A drink?"
+ },
+ {
+  "id": "mimic",
+  "name": "Mimic",
+  "location": "pirate",
+  "size": "small",
+  "line": "I'm definitely just a treasure chest."
+ },
+ {
+  "id": "sea_witch",
+  "name": "Morgana",
+  "location": "pirate",
+  "size": "tall",
+  "line": "The sea told me you'd pour perfectly."
+ },
+ {
+  "id": "captain_cat",
+  "name": "Whiskers",
+  "location": "pirate",
+  "size": "tall",
+  "line": "Cream. In a proper glass, sailor."
+ },
+ {
+  "id": "bilge_rat",
+  "name": "Bilge Rat",
+  "location": "pirate",
+  "size": "small",
+  "line": "Squeak. Got any cheese drinks?"
+ },
+ {
+  "id": "kraken_kid",
+  "name": "Krakkie",
+  "location": "pirate",
+  "size": "small",
+  "line": "When I grow up, I'll sink ships!"
+ },
+ {
+  "id": "governor",
+  "name": "Lady Governor",
+  "location": "pirate",
+  "size": "tall",
+  "line": "This ship is under my protection. Pour."
+ },
+ {
+  "id": "quartermaster",
+  "name": "Quill",
+  "location": "pirate",
+  "size": "tall",
+  "line": "I'll be noting the exact amount."
+ },
+ {
+  "id": "old_salt",
+  "name": "Old Salt",
+  "location": "pirate",
+  "size": "tall",
+  "line": "Seen many storms. Never a perfect pour."
+ },
+ {
+  "id": "gull_spy",
+  "name": "Gull",
+  "location": "pirate",
+  "size": "small",
+  "line": "Psst. Pour fast, captain's coming."
+ },
+ {
+  "id": "cabin_boy",
+  "name": "Little Jim",
+  "location": "pirate",
+  "size": "tall",
+  "line": "First voyage! Is this grown-up juice?"
+ },
+ {
+  "id": "siren",
+  "name": "Lorelei",
+  "location": "pirate",
+  "size": "floater",
+  "line": "La la laaa... a drink for the song?"
+ },
+ {
+  "id": "anchor_golem",
+  "name": "Anchor",
+  "location": "pirate",
+  "size": "tall",
+  "line": "Heavy day. Heavy pour."
+ },
+ {
+  "id": "shanty",
+  "name": "Shanty Sam",
+  "location": "pirate",
+  "size": "tall",
+  "line": "Yo ho! Sing while you pour!"
+ },
+ {
+  "id": "puffer_pirate",
+  "name": "Puffy",
+  "location": "pirate",
+  "size": "small",
+  "line": "Don't make me puff, matey."
+ },
+ {
+  "id": "admiral",
+  "name": "Admiral Fogg",
+  "location": "pirate",
+  "size": "tall",
+  "line": "A measured pour. Military precision."
+ },
+ {
+  "id": "vampire_lord",
+  "name": "Lord Nocturne",
+  "location": "castle",
+  "size": "tall",
+  "line": "I never drink... cocoa. Until tonight."
+ },
+ {
+  "id": "witch",
+  "name": "Grizelda",
+  "location": "castle",
+  "size": "tall",
+  "line": "Eye of newt? No? Fine, a latte."
+ },
+ {
+  "id": "skeleton",
+  "name": "Rattles",
+  "location": "castle",
+  "size": "tall",
+  "line": "Pour slowly. I have no stomach for spills."
+ },
+ {
+  "id": "frankenstein",
+  "name": "Franky",
+  "location": "castle",
+  "size": "tall",
+  "line": "Drink. Good. Drink good."
+ },
+ {
+  "id": "mummy",
+  "name": "Wrappy",
+  "location": "castle",
+  "size": "tall",
+  "line": "Three thousand years thirsty."
+ },
+ {
+  "id": "werewolf_castle",
+  "name": "Fang",
+  "location": "castle",
+  "size": "tall",
+  "line": "GRRR. Please. GRRR."
+ },
+ {
+  "id": "castle_bat",
+  "name": "Batty",
+  "location": "castle",
+  "size": "small",
+  "line": "Eek! Something dark and warm!"
+ },
+ {
+  "id": "pumpkin",
+  "name": "Jack O.",
+  "location": "castle",
+  "size": "tall",
+  "line": "Spiced, please. It's my whole thing."
+ },
+ {
+  "id": "ghost_knight",
+  "name": "Sir Clank",
+  "location": "castle",
+  "size": "floater",
+  "line": "A toast to the old kingdom!"
+ },
+ {
+  "id": "gargoyle",
+  "name": "Gargo",
+  "location": "castle",
+  "size": "tall",
+  "line": "Been on the roof for centuries. Thirsty."
+ },
+ {
+  "id": "spider",
+  "name": "Spinella",
+  "location": "castle",
+  "size": "small",
+  "line": "Eight legs, one glass. Fill it."
+ },
+ {
+  "id": "zombie",
+  "name": "Shuffles",
+  "location": "castle",
+  "size": "tall",
+  "line": "Braaains... I mean, chai."
+ },
+ {
+  "id": "banshee",
+  "name": "Wailing Wendy",
+  "location": "castle",
+  "size": "floater",
+  "line": "AAAAAH! ...sorry. A tea please."
+ },
+ {
+  "id": "butler",
+  "name": "Graves",
+  "location": "castle",
+  "size": "tall",
+  "line": "The master requests a perfectly level pour."
+ },
+ {
+  "id": "black_cat",
+  "name": "Midnight",
+  "location": "castle",
+  "size": "small",
+  "line": "Prrr. Bad luck if you spill."
+ },
+ {
+  "id": "imp",
+  "name": "Impy",
+  "location": "castle",
+  "size": "small",
+  "line": "Hee hee! Pour it wrong! Pour it wrong!"
+ },
+ {
+  "id": "necromancer",
+  "name": "Mortimer",
+  "location": "castle",
+  "size": "tall",
+  "line": "Raise your glass. And the dead."
+ },
+ {
+  "id": "lady_raven",
+  "name": "Lady Raven",
+  "location": "castle",
+  "size": "tall",
+  "line": "Something dark, dear. Like my mood."
+ },
+ {
+  "id": "swamp_thing",
+  "name": "Bog",
+  "location": "castle",
+  "size": "tall",
+  "line": "Glub. Murky. Like home."
+ },
+ {
+  "id": "cyclops",
+  "name": "Cy",
+  "location": "castle",
+  "size": "tall",
+  "line": "I only need one eye to judge your pour."
+ },
+ {
+  "id": "candle_spirit",
+  "name": "Wick",
+  "location": "castle",
+  "size": "small",
+  "line": "Don't let me melt, please."
+ },
+ {
+  "id": "raven",
+  "name": "Raven",
+  "location": "castle",
+  "size": "small",
+  "line": "Nevermore... unless it's free."
+ },
+ {
+  "id": "jester_ghost",
+  "name": "Jinx",
+  "location": "castle",
+  "size": "floater",
+  "line": "Ha ha! The joke's on the glass!"
+ },
+ {
+  "id": "alchemist",
+  "name": "Dr. Grim",
+  "location": "castle",
+  "size": "tall",
+  "line": "Fascinating viscosity. Proceed."
+ },
+ {
+  "id": "castle_owl",
+  "name": "Hootington",
+  "location": "castle",
+  "size": "tall",
+  "line": "Who? Who poured that? Impressive."
+ },
+ {
+  "id": "armor",
+  "name": "Armand",
+  "location": "castle",
+  "size": "tall",
+  "line": "Clank. Clank. One mead, please."
+ },
+ {
+  "id": "slime",
+  "name": "Gloop",
+  "location": "castle",
+  "size": "small",
+  "line": "Blorp. Pour it on me. Kidding."
+ },
+ {
+  "id": "ghoul_chef",
+  "name": "Chef Ghoul",
+  "location": "castle",
+  "size": "tall",
+  "line": "Today's special: soup of the night."
+ },
+ {
+  "id": "gardener",
+  "name": "Grub",
+  "location": "castle",
+  "size": "tall",
+  "line": "The roses are thirsty. So am I."
+ },
+ {
+  "id": "royal_ghost",
+  "name": "Queen Wisp",
+  "location": "castle",
+  "size": "floater",
+  "line": "We are amused. Pour for the queen."
+ }
+]

@@ -19,14 +19,27 @@ export interface LevelCard {
 export interface LevelSelectActions {
   onPlay(id: string): void;
   onClose(): void;
+  /** Switch to another location's levels (tabs). */
+  onTab?(location: string): void;
+}
+
+export interface LevelTab {
+  id: string;
+  label: string;
+  active: boolean;
 }
 
 function starRow(n: number, cls = 'lvl-stars'): string {
   return `<span class="${cls}">${[0, 1, 2].map((i) => `<span class="lvl-star ${i < n ? 'lvl-star--on' : ''}">★</span>`).join('')}</span>`;
 }
 
-export function showLevelSelect(title: string, cards: LevelCard[], actions: LevelSelectActions): Screen {
+export function showLevelSelect(title: string, cards: LevelCard[], actions: LevelSelectActions, tabs: LevelTab[] = []): Screen {
   const total = cards.reduce((s, c) => s + c.stars, 0);
+  const tabsHtml = tabs.length
+    ? `<div class="leaderboard__tabs lvl-tabs">${tabs
+        .map((t) => `<button class="btn leaderboard__tab ${t.active ? 'leaderboard__tab--on' : ''}" data-tab="${t.id}">${t.label}</button>`)
+        .join('')}</div>`
+    : '';
   const html = cards
     .map(
       (c) => `
@@ -43,6 +56,7 @@ export function showLevelSelect(title: string, cards: LevelCard[], actions: Leve
     `
     ${header(title, actions.onClose)}
     <div class="card lvl-select">
+      ${tabsHtml}
       <div class="lvl-select__total">★ ${total} / ${cards.length * 3}</div>
       <div class="lvl-grid">${html}</div>
       <div class="lvl-select__hint">Hit the line on every glass. More total points, more stars.</div>
@@ -53,6 +67,11 @@ export function showLevelSelect(title: string, cards: LevelCard[], actions: Leve
   screen.el.querySelectorAll<HTMLButtonElement>('[data-level]').forEach((b) =>
     b.addEventListener('click', () => {
       if (!b.disabled) actions.onPlay(b.dataset.level!);
+    }),
+  );
+  screen.el.querySelectorAll<HTMLButtonElement>('[data-tab]').forEach((b) =>
+    b.addEventListener('click', () => {
+      if (!b.classList.contains('leaderboard__tab--on')) actions.onTab?.(b.dataset.tab!);
     }),
   );
   bindBack(screen, actions.onClose);

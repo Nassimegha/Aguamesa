@@ -7,3 +7,7 @@ dist/
 vite.log
 vite.err.log
 .DS_Store
+blender/_chars/
+blender/_bake/
+blender/*_raw.glb
+blender/*_weld.glb

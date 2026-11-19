@@ -5,26 +5,10 @@
 import * as THREE from 'three';
 import type { GameScene } from './scene';
 
-export type CustomerId =
-  | 'giant' | 'fairy' | 'ghost'
-  | 'surfer' | 'crab_mister' | 'mermaid'
-  | 'yeti' | 'skier' | 'grandma_bear'
-  | 'pirate' | 'wizard' | 'barista';
+/** Any id of world/customers.manifest.json (180 customers, char_<id>.glb, 00 §6.3). */
+export type CustomerId = string;
 
-const CUSTOMER_GLB: Record<CustomerId, string> = {
-  giant: '/assets/models/char_giant.glb',
-  fairy: '/assets/models/char_fairy.glb',
-  ghost: '/assets/models/char_ghost.glb',
-  surfer: '/assets/models/char_surfer.glb',
-  crab_mister: '/assets/models/char_crab_mister.glb',
-  mermaid: '/assets/models/char_mermaid.glb',
-  yeti: '/assets/models/char_yeti.glb',
-  skier: '/assets/models/char_skier.glb',
-  grandma_bear: '/assets/models/char_grandma_bear.glb',
-  pirate: '/assets/models/char_pirate.glb',
-  wizard: '/assets/models/char_wizard.glb',
-  barista: '/assets/models/char_barista.glb',
-};
+const customerUrl = (id: CustomerId): string => `/assets/models/char_${id}.glb`;
 
 const ANIMATION_NAMES = ['idle', 'happy', 'meh', 'splashed'] as const;
 type AnimationName = (typeof ANIMATION_NAMES)[number];
@@ -56,7 +40,7 @@ export async function spawnCustomer(
   id: CustomerId,
   position: THREE.Vector3 = new THREE.Vector3(),
 ): Promise<Customer> {
-  const root = await game.loadGLB(CUSTOMER_GLB[id]);
+  const root = await game.loadGLB(customerUrl(id));
   // Les animations écrivent la position du nœud animé (le personnage revient à l'origine
   // à chaque image) : on place donc un support autour, et c'est le support qu'on déplace.
   const holder = new THREE.Group();

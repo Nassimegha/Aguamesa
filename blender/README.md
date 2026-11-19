@@ -44,22 +44,29 @@ Puis copie `glass_pint.glb` dans `../assets/models/`.
 
 **Piège important :** n'utilise jamais `gltf-transform optimize` (la commande tout-en-un) sur un verre. Ses étapes `join`/`prune`/`flatten` fusionnent les meshes et **suppriment les empties sans mesh** — exactement `LIQUID_BOTTOM` et `LIQUID_TOP` dont P1 a besoin. Utilise seulement `weld` + `meshopt` séparément, comme ci-dessus. `check_nodes.mjs` sert justement à repérer ce problème avant de commit.
 
-## Reconstruire un lieu (loc_cafe, et modèle pour loc_beach/loc_chalet)
+## Les 6 lieux (loc_<lieu>.glb)
+
+- `build_loc_cafe.py` : le Midnight Café, et la boîte à outils commune (matériaux, fusion par matériau, cuisson PBR).
+- `build_loc_themed.py` : Beach Bar, Mountain Chalet, Funfair, Pirate Ship et Haunted Castle, sur la même structure (comptoir devant, clients sur l'estrade derrière, ardoise à droite, décor du thème à gauche). Il réutilise les fonctions de `build_loc_cafe.py`.
+- Les matériaux procéduraux (bois veiné et usé, parquet, brique, plâtre, laiton brossé, céramique) sont **cuits par Cycles** en petites textures WebP : couleur × occlusion ambiante (ombres de contact), normal map, rugosité. Tout le reste est fusionné par matériau : 15 à 35 draw calls par lieu, 190 à 460 Ko.
 
 ```bash
 cd blender
 "C:\Program Files\Blender Foundation\Blender 5.2\blender.exe" --background --python build_loc_cafe.py
+"C:\Program Files\Blender Foundation\Blender 5.2\blender.exe" --background --python build_loc_themed.py   # AGUAMESA_ONLY=beach,chalet pour en refaire quelques-uns
+# pour chaque loc_<lieu>_raw.glb :
 npx @gltf-transform/cli weld loc_cafe_raw.glb loc_cafe_weld.glb
-npx @gltf-transform/cli meshopt loc_cafe_weld.glb loc_cafe.glb --level medium
-node check_nodes.mjs loc_cafe.glb
+npx @gltf-transform/cli meshopt loc_cafe_weld.glb ../assets/models/loc_cafe.glb --level medium
+node check_nodes.mjs ../assets/models/loc_cafe.glb
 ```
 
-Puis copie `loc_cafe.glb` dans `../assets/models/`.
-
-**Convention des marqueurs (même idée que LIQUID_BOTTOM/TOP sur les verres) :** chaque `loc_<lieu>.glb` doit contenir 3 empties, lus par `location.ts` :
+**Marqueurs lus par `location.ts` :**
 - `GLASS_ANCHOR` : où poser le verre actif (toujours à l'origine du lieu, comme pour `glass_pint`)
-- `CAMERA_POS` : position de la caméra de jeu
-- `CAMERA_TARGET` : point que la caméra regarde
+- `CAMERA_POS` / `CAMERA_TARGET` : caméra du lieu (le jeu recadre ensuite en portrait)
+- `UI_DIALOGUE_ANCHOR` : au-dessus de la tête du client (bulle de dialogue, si le client n'est pas encore chargé)
+- `UI_STREAK_ANCHOR` : sur l'ardoise
+- `CHALKBOARD` : le mesh de l'ardoise, repeint par le jeu (boissons du lieu, numéro de la nuit, série 🔥 et traits à la craie)
+- `CANDLE_FLAME_n` : les flammes, qui vacillent en jeu
 
 **Astuce pour régler la caméra sans deviner à l'aveugle :** `src/client/main.ts` (temporaire) a un mode `?debug=1` dans l'URL qui place une caméra large et fixe pour voir tout le décor d'un coup, avant de choisir les bonnes valeurs de `CAMERA_POS`/`CAMERA_TARGET` à mettre dans le script Blender.
 
@@ -70,18 +77,30 @@ Puis copie `loc_cafe.glb` dans `../assets/models/`.
 - `build_glasses.py` construit les 7 verres restants (`mug_giant`, `thimble`, `flute`, `coconut`, `teacup`, `goblet`, `tankard`), sur le même principe que `build_glass_pint.py` : un profil de révolution (liste de `(rayon, z)`), lofté en mesh, plus les 3 marqueurs du contrat §6.3.
 - Même pipeline de compression (`weld` + `meshopt`, jamais `optimize`).
 
-## Les clients animés (char_<id>.glb, Tâche 3)
+## Les 180 clients animés (char_<id>.glb, 30 par lieu)
 
-- `build_customers_cafe.py` construit les 3 clients du Café (`giant`, `fairy`, `ghost`). Chacun a 4 animations nommées **exactement** `idle`, `happy`, `meh`, `splashed` (contrat §6.3), lues par `src/client/world/customers.ts`.
+- `build_customers.py` est un **générateur** : un constructeur de personnage paramétrique (corps, tête, yeux, nez/museau/bec, oreilles, cheveux, chapeau, bras, ailes, queue, accessoires, objet tenu) et une table `ROSTERS` de 30 clients par lieu, chacun avec son nom et sa réplique. Il écrit aussi `src/client/world/customers.manifest.json`, lu par le jeu : impossible que le code et les .glb se désynchronisent.
+- Pas de texture : les couleurs sont dans la géométrie (vertex colors) sur un seul matériau partagé, et les morceaux sont fusionnés par partie animée (corps, tête, bras, ailes, queue). Résultat : 3 à 8 draw calls et environ 45 Ko par client.
+- Chaque client a les 4 animations du contrat (§6.3), avec tête, bras, bouche, ailes et queue qui bougent : `idle` (respire, regarde autour), `happy` (s'accroupit, saute, lève les bras, grand sourire), `meh` (s'affaisse, secoue la tête, croise les bras), `splashed` (recule, se protège le visage, s'ébroue).
+- Tailles : `tall` (debout derrière le bar), `small` (posé sur le comptoir à côté du verre), `floater` (flotte derrière le comptoir). La position de chaque taille est dans `src/client/world/roster.ts`.
+
+```bash
+cd blender
+"C:\Program Files\Blender Foundation\Blender 5.2\blender.exe" --background --python build_customers.py   # AGUAMESA_ONLY=id1,id2 pour en refaire quelques-uns
+# puis compresser tout blender/_chars/*_raw.glb (weld + meshopt) vers ../assets/models/char_<id>.glb
+node check_animations.mjs ../assets/models/char_giant.glb
+# planche de contrôle visuel des 30 clients d'un lieu :
+"C:\Program Files\Blender Foundation\Blender 5.2\blender.exe" --background --python preview_customers.py -- cafe planche_cafe.png
+```
+
+- **Qui vient au comptoir :** au Service du Jour, le tirage dépend de `dayId` + lieu (même soirée pour tous les joueurs, contrat §1, mais différente chaque nuit) ; en mode Niveaux et en Visite, au hasard. Le score ne dépend jamais du client.
 - **Piège animation (le plus sournois) :** si tu assignes juste `obj.animation_data.action = ...` plusieurs fois de suite pour créer plusieurs animations, Blender **n'exporte que la dernière** — les autres actions sont silencieusement perdues à l'export, même avec `use_fake_user = True`. Il faut empiler chaque action sur sa propre piste NLA (`animation_data.nla_tracks.new()` + `track.strips.new(name, frame_debut, action)`, puis remettre `animation_data.action = None`), et exporter avec `export_animation_mode='NLA_TRACKS'`. `check_animations.mjs fichier.glb` vérifie les noms des animations après export/compression.
 - **Piège Three.js (deuxième sournoiserie) :** `GLTFLoader` renvoie les animations dans `gltf.animations`, **pas** dans `gltf.scene.animations`. Si `scene.ts` ne garde que `gltf.scene`, les animations sont perdues avant même d'arriver à `customers.ts`. Il faut recopier `gltf.scene.animations = gltf.animations` avant de renvoyer la scène (déjà fait dans `scene.ts`).
 
 ## La carte et les lieux 2/3 (Tâche 4)
 
 - `src/client/world/map.ts` réutilise **island.glb tel quel** (pas retouché) et les positions de `map-viewer/map_meta.json`, avec son propre éclairage de scène (`scene.ts`) — pas celui, plus dur, de `map-viewer/index.html`. C'est pour ça que le château qui paraissait trop sombre dans le viewer de test n'a pas eu besoin d'être corrigé dans `build_map.py` : le problème venait de l'éclairage du viewer de prévisualisation, pas du modèle.
-- Les panneaux des 6 lieux sont des pastilles HTML (comme dans `map-viewer`), pas des objets 3D : `map.ts` projette la position 3D de chaque lieu à l'écran à chaque frame. Les lieux verrouillés (4, 5, 6) affichent 🔒 et « Bientôt », non cliquables.
-- `build_loc_beach.py` et `build_loc_chalet.py` reprennent exactement la structure de `build_loc_cafe.py` (comptoir, mur du fond, étagère, fenêtre, lampe/foyer, un petit animal) avec un habillage différent. Le Chalet montre des sommets enneigés et une cascade par la fenêtre (jamais la mer, contrat et brief 02 Tâche 4).
-- `build_customers_beach.py` et `build_customers_chalet.py` reprennent exactement le pipeline NLA de `build_customers_cafe.py` pour les 6 clients restants (surfeuse, Monsieur Crabe, sirène, yéti, skieuse, grand-mère ourse).
+- Les panneaux des 6 lieux sont des pastilles HTML (comme dans `map-viewer`), pas des objets 3D : `map.ts` projette la position 3D de chaque lieu à l'écran à chaque frame, et écarte celles qui se chevauchent. Toucher un lieu → la caméra y vole → « Enter » → mode **Visite** (le décor, caméra libre, les 30 clients du lieu et leurs réactions, sans consommer l'essai du jour). Lien direct pour l'équipe et le jury : `game.html?visit=castle` (ou cafe, beach, chalet, fair, pirate).
 
 ## Optimisation et performance (Tâche 6)
 

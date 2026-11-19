@@ -53,6 +53,34 @@ ns["PALETTE"].update({
     "balloon_red": ("#E8423A", 0.25, 0.0, 0.3),
     "balloon_teal": ("#3FC1B0", 0.25, 0.0, 0.3),
     "popcorn": ("#FFF1C2", 0.9, 0.0, 0.0),
+    # beach bar (tiki)
+    "bamboo": ("#C9A25A", 0.6, 0.0, 0.0),
+    "thatch": ("#A8843E", 0.95, 0.0, 0.0),
+    "sand": ("#D9C08A", 0.95, 0.0, 0.0),
+    "tiki": ("#7A4E2A", 0.75, 0.0, 0.0),
+    "coconut": ("#6B4226", 0.85, 0.0, 0.0),
+    "leaf": ("#3F8A3A", 0.7, 0.0, 0.0),
+    "surf_board": ("#3FB2A0", 0.35, 0.0, 0.0),
+    "surf_stripe": ("#F28A4A", 0.35, 0.0, 0.0),
+    "torch_flame": ("#FF9A3A", 0.3, 0.0, 8.0),
+    "shell_pink": ("#F2C2A8", 0.5, 0.0, 0.0),
+    "ocean_night": ("#0F3A5A", 0.15, 0.0, 0.5),
+    "lantern_pink": ("#FF8FB3", 0.3, 0.0, 5.0),
+    "lantern_teal": ("#5FE3C8", 0.3, 0.0, 5.0),
+    # mountain chalet
+    "log": ("#8A5A34", 0.8, 0.0, 0.0),
+    "log_end": ("#C99A64", 0.85, 0.0, 0.0),
+    "pine": ("#B8875A", 0.7, 0.0, 0.0),
+    "fieldstone": ("#7E7468", 0.95, 0.0, 0.0),
+    "fire": ("#FF7A2A", 0.3, 0.0, 9.0),
+    "ember": ("#FFB84A", 0.3, 0.0, 6.0),
+    "snow": ("#F4F8FF", 0.6, 0.0, 0.4),
+    "night_snow": ("#1A2A4A", 0.2, 0.0, 0.4),
+    "wool_red": ("#B8322B", 0.95, 0.0, 0.0),
+    "wool_cream": ("#F4E6C8", 0.95, 0.0, 0.0),
+    "antler": ("#E2CFA8", 0.6, 0.0, 0.0),
+    "ski_red": ("#D6453D", 0.35, 0.0, 0.0),
+    "cocoa": ("#5A3A22", 0.4, 0.0, 0.0),
 })
 
 
@@ -68,10 +96,11 @@ def shell(wall, wall_kind_mat, counter, counter_front, floor):
     cyl("Coaster", 0.05, 0.004, (0, 0, 0.002), "coaster", verts=20)
 
 
-def chalkboard(frame="chalk_frame"):
+def chalkboard(frame="chalk_frame", y=-0.91):
+    # y: depth of the board frame (the chalet's log wall sticks out, so its board hangs in front)
     cx, cz = -0.33, 0.56
-    box("ChalkFrame", (0.46, 0.04, 0.38), (cx, -0.91, cz), frame, bevel=0.008)
-    plane("CHALKBOARD", 0.41, 0.335, (cx, -0.885, cz), "chalkboard", rot=(-math.pi / 2, 0, 0))
+    box("ChalkFrame", (0.46, 0.04, 0.38), (cx, y, cz), frame, bevel=0.008)
+    plane("CHALKBOARD", 0.41, 0.335, (cx, y + 0.025, cz), "chalkboard", rot=(-math.pi / 2, 0, 0))
     return cx, cz
 
 
@@ -233,6 +262,119 @@ def fair():
             "stripe_red": ("plaster", 128, False), "stripe_cream": ("plaster", 128, False)}
 
 
+def beach():
+    shell("thatch", "bamboo", "tiki", "bamboo", "sand")
+    # bamboo poles in front of the counter and framing the back
+    for i in range(14):
+        cyl(f"Pole{i}", 0.03, 0.84, (-0.68 + i * 0.105, 0.37, -0.48), "bamboo", verts=10)
+        for k in range(2):
+            torus(f"PoleNode{i}{k}", 0.032, 0.006, (-0.68 + i * 0.105, 0.37, -0.75 + k * 0.3), "tiki")
+    # big open window on the ocean at night, behind the customer (screen left)
+    wx = 0.42
+    box("OceanSky", (0.9, 0.01, 0.7), (wx, -0.92, 0.95), "sea_night")
+    box("Ocean", (0.9, 0.012, 0.22), (wx, -0.915, 0.66), "ocean_night")
+    sphere("Moon", 0.06, (wx + 0.22, -0.91, 1.12), "moon")
+    for k, (dx, dz) in enumerate(((-0.3, 1.2), (-0.1, 1.08), (0.05, 1.22), (0.32, 0.98), (-0.25, 0.92))):
+        sphere(f"Star{k}", 0.007, (wx + dx, -0.905, dz), "star", seg=6, rings=4)
+    for k in range(5):  # moonlight sparkles on the water
+        box(f"Glint{k}", (0.05 - k * 0.006, 0.004, 0.004), (wx + 0.22 + (k % 2) * 0.03, -0.905, 0.74 - k * 0.025), "moon")
+    for s in (-1, 1):
+        cyl(f"WinPost{s}", 0.035, 0.8, (wx + s * 0.47, -0.88, 0.92), "bamboo", verts=10)
+    cyl("WinTop", 0.035, 1.0, (wx, -0.88, 1.32), "bamboo", rot=(0, math.pi / 2, 0), verts=10)
+    cyl("WinSill", 0.035, 1.0, (wx, -0.86, 0.55), "bamboo", rot=(0, math.pi / 2, 0), verts=10)
+    # palm silhouette outside
+    cyl("PalmTrunk", 0.025, 0.5, (wx - 0.3, -0.912, 0.8), "tiki", rot=(0, 0.25, 0), verts=8)
+    for k in range(6):
+        a = k / 6 * math.tau
+        cone(f"Frond{k}", 0.05, 0.0, 0.26, (wx - 0.24 + math.cos(a) * 0.1, -0.911, 1.06 + math.sin(a) * 0.06), "leaf",
+             rot=(0, math.pi / 2 + a, 0), verts=4)
+    # thatched roof fringe across the top
+    for k in range(16):
+        cone(f"ThatchFringe{k}", 0.1, 0.0, 0.22, (-1.0 + k * 0.135, -0.35, 1.45), "thatch", rot=(math.pi, 0, 0), verts=6)
+    box("RoofBeam", (2.4, 0.08, 0.08), (0, -0.35, 1.56), "tiki")
+    cx, cz = chalkboard("bamboo")
+    # string of paper lanterns
+    for k in range(7):
+        u = k / 6
+        x, z = -0.75 + u * 1.5, 1.32 - math.sin(u * math.pi) * 0.1
+        sphere(f"Lantern{k}", 0.035, (x, -0.3, z), "lantern_pink" if k % 2 == 0 else "lantern_teal", scale=(1, 1, 1.2), seg=10, rings=6)
+    # surfboard leaning on the wall (screen right, beside the chalkboard)
+    sphere("Surfboard", 0.5, (-0.72, -0.86, 0.35), "surf_board", scale=(0.16, 0.03, 1.0))
+    box("SurfStripe", (0.02, 0.012, 0.8), (-0.72, -0.84, 0.35), "surf_stripe")
+    # tiki torches + counter props
+    for k, x in enumerate((-0.95, 0.95)):
+        cyl(f"TorchPole{k}", 0.02, 0.9, (x, -0.6, 0.1), "bamboo", verts=8)
+        cone(f"TorchCup{k}", 0.05, 0.035, 0.08, (x, -0.6, 0.58), "tiki", verts=10)
+        cone(f"TorchFlame{k}", 0.035, 0.0, 0.12, (x, -0.6, 0.68), "torch_flame", verts=8)
+    for k, (x, y) in enumerate(((0.5, 0.0), (0.6, 0.06))):
+        sphere(f"Coconut{k}", 0.05, (x, y, 0.05), "coconut")
+    cyl("Straw", 0.004, 0.14, (0.5, 0.0, 0.12), "surf_stripe", rot=(0.3, 0, 0), verts=6)
+    for k, (x, y) in enumerate(((-0.55, 0.15), (0.32, 0.22), (-0.42, 0.25))):
+        sphere(f"Seashell{k}", 0.022, (x, y, 0.008), "shell_pink", scale=(1.2, 1, 0.45), seg=10, rings=6)
+    box("TikiMask", (0.12, 0.04, 0.2), (0.0, -0.88, 0.95), "tiki", bevel=0.01)
+    for s in (-1, 1):
+        sphere(f"TikiEye{s}", 0.018, (s * 0.03, -0.86, 0.99), "torch_flame", seg=8, rings=6)
+    candles(((-0.28, 0.24, 0.0), (0.36, 0.2, 0.0)), dish="tiki")
+    markers(cx, cz)
+    return {"thatch": ("plaster", 512, True), "bamboo": ("wood", 512, True), "tiki": ("wood", 512, True),
+            "sand": ("plaster", 512, True), "coconut": ("plaster", 128, False)}
+
+
+def chalet():
+    shell("log", "log", "pine", "log", "pine")
+    # stacked horizontal logs on the back wall with light log ends
+    for i in range(10):
+        z = -0.32 + i * 0.19
+        cyl(f"Log{i}", 0.09, 2.6, (0, -0.9, z), "log", rot=(0, math.pi / 2, 0), verts=12)
+        for s in (-1, 1):
+            cyl(f"LogEnd{i}{s}", 0.085, 0.02, (s * 1.25, -0.9, z), "log_end", rot=(0, math.pi / 2, 0), verts=12)
+    cx, cz = chalkboard("pine", y=-0.785)
+    # snowy window above the chalkboard (in front of the logs)
+    wx, wz = -0.33, 1.0
+    box("WinFrame", (0.42, 0.06, 0.34), (wx, -0.78, wz), "pine", bevel=0.01)
+    box("WinPane", (0.36, 0.01, 0.28), (wx, -0.748, wz), "night_snow")
+    box("WinCrossV", (0.015, 0.02, 0.28), (wx, -0.742, wz), "pine")
+    box("WinCrossH", (0.36, 0.02, 0.015), (wx, -0.742, wz), "pine")
+    box("SnowSill", (0.44, 0.08, 0.03), (wx, -0.74, wz - 0.17), "snow", bevel=0.01)
+    for k in range(9):
+        sphere(f"Flake{k}", 0.006, (wx - 0.15 + (k * 0.037) % 0.3, -0.74, wz - 0.11 + (k * 0.061) % 0.24), "snow", seg=6, rings=4)
+    # stone fireplace with a real fire, behind the customer (screen left)
+    fx = 0.48
+    box("Hearth", (0.62, 0.3, 0.08), (fx, -0.74, -0.32), "fieldstone", bevel=0.02)
+    for s in (-1, 1):
+        box(f"FirePillar{s}", (0.13, 0.22, 0.6), (fx + s * 0.25, -0.76, 0.0), "fieldstone", bevel=0.02)
+    box("Mantel", (0.7, 0.26, 0.06), (fx, -0.74, 0.33), "pine", bevel=0.01)
+    box("Chimney", (0.5, 0.2, 0.9), (fx, -0.8, 0.8), "fieldstone", bevel=0.02)
+    box("FireBack", (0.38, 0.04, 0.5), (fx, -0.86, -0.02), "iron")
+    for k in range(3):
+        cyl(f"FireLog{k}", 0.035, 0.3, (fx, -0.74 + k * 0.03, -0.24 + k * 0.035), "log", rot=(0, math.pi / 2, 0.4 * (k - 1)), verts=8)
+    for k, (dx, h) in enumerate(((-0.07, 0.22), (0.0, 0.3), (0.07, 0.2))):
+        cone(f"Flame{k}", 0.06, 0.0, h, (fx + dx, -0.74, -0.2 + h / 2), "fire", verts=8)
+    sphere("Embers", 0.08, (fx, -0.74, -0.25), "ember", scale=(1.6, 0.8, 0.3))
+    # mantel decor: antlers, mugs of cocoa, a cuckoo-clock style box
+    for s in (-1, 1):
+        cyl(f"Antler{s}", 0.01, 0.2, (fx + s * 0.07, -0.82, 0.62), "antler", rot=(0, s * 0.7, 0), verts=6)
+        cyl(f"Tine{s}", 0.008, 0.1, (fx + s * 0.12, -0.8, 0.68), "antler", rot=(0, s * 0.2, 0), verts=6)
+    box("AntlerPlaque", (0.1, 0.03, 0.12), (fx, -0.85, 0.58), "pine", bevel=0.01)
+    for k, x in enumerate((fx - 0.2, fx + 0.2)):
+        cyl(f"MantelMug{k}", 0.03, 0.06, (x, -0.72, 0.39), "wool_red" if k else "wool_cream", verts=12)
+    # crossed skis on the left wall area
+    for s in (-1, 1):
+        box(f"Ski{s}", (0.05, 0.012, 0.9), (0.95, -0.86, 0.75), "ski_red", rot=(0, s * 0.25, 0), bevel=0.008)
+    # cocoa mugs + wool blanket on the counter side
+    for k, (x, y) in enumerate(((0.5, 0.0), (0.58, 0.06))):
+        cyl(f"CocoaMug{k}", 0.034, 0.075, (x, y, 0.0375), "wool_cream", verts=14)
+        cyl(f"Cocoa{k}", 0.03, 0.005, (x, y, 0.074), "cocoa", verts=14)
+        sphere(f"Mallow{k}", 0.012, (x + 0.01, y, 0.08), "snow", seg=8, rings=6)
+    box("Blanket", (0.26, 0.2, 0.04), (-0.56, 0.12, 0.02), "wool_red", bevel=0.015)
+    for k in range(3):
+        box(f"BlanketStripe{k}", (0.262, 0.03, 0.042), (-0.56, 0.06 + k * 0.06, 0.02), "wool_cream")
+    candles(((-0.28, 0.24, 0.0), (0.36, 0.2, 0.0)), dish="pine")
+    markers(cx, cz)
+    return {"log": ("wood", 512, True), "pine": ("wood", 1024, True), "fieldstone": ("brick", 512, True),
+            "wool_red": ("plaster", 128, False), "wool_cream": ("plaster", 128, False)}
+
+
 def join_per_material():
     keep = lambda n: n == "CHALKBOARD" or n.startswith("CANDLE_FLAME_")
     groups = {}
@@ -265,5 +407,9 @@ def build(loc_id, fn):
     print(f"[loc_themed] {loc_id}: {len(meshes)} draw calls, {os.path.getsize(raw)} bytes raw", flush=True)
 
 
-for loc_id, fn in (("pirate", pirate), ("castle", castle), ("fair", fair)):
+ALL = (("beach", beach), ("chalet", chalet), ("pirate", pirate), ("castle", castle), ("fair", fair))
+ONLY = os.environ.get("AGUAMESA_ONLY")
+for loc_id, fn in ALL:
+    if ONLY and loc_id not in ONLY.split(","):
+        continue
     build(loc_id, fn)
