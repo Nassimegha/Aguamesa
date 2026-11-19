@@ -1,176 +1,147 @@
-// src/client/game.ts — MERGED version (Task 1 skeleton)
-// This REPLACES the template's game.ts. It keeps the template's
-// Three.js Earth scene exactly as it was, and replaces ONLY the
-// counter API part (fetchInitialCount / updateCounter / increment /
-// decrement, which talked to the template's /api/init counter) with
-// the Task 1 API: gameApi.init() from ./api.ts (real, on Reddit) or
-// ./mockApi.ts (local, on localhost).
-// Do NOT copy src/client/main.ts from the Task 1 zip — game.ts IS
-// the entrypoint here (devvit.json: game.html). splash.ts is untouched.
-
+// src/client/game.ts — point d'entrée réel du jeu (remplace la démo Three.js du modèle).
+// Branche : le monde 3D de P2 (world/*), le moteur de jeu de P1 (game/*), le serveur
+// de P3 (api.ts / mockApi.ts), sur le parcours du Service du Jour (00 §2, les 7 étapes).
 import * as THREE from 'three';
-import { navigateTo } from '@devvit/client';
 import { api, type GameApi } from './api';
 import { mockApi } from './mockApi';
+import { createScene } from './world/scene';
+import { loadLocation } from './world/location';
+import { spawnCustomer, type Customer, type CustomerId } from './world/customers';
+import { loadMap } from './world/map';
+import { showHome } from './ui/home';
+import { showNightResult } from './ui/nightResult';
+import { showLeaderboard } from './ui/leaderboard';
+import { showShelf } from './ui/shelf';
+import type { Screen } from './ui/screen';
+import { createGlassStage } from './game/glassStage';
+import { playNight } from './game/round';
+import { createGameAudio } from './game/audio';
+import type { DailyService } from '../shared/types';
 
-const titleElement = document.getElementById('title') as HTMLHeadingElement;
-
-const docsLink = document.getElementById('docs-link');
-const playtestLink = document.getElementById('playtest-link');
-const discordLink = document.getElementById('discord-link');
-
-docsLink?.addEventListener('click', () =>
-  navigateTo('https://developers.reddit.com/docs')
-);
-playtestLink?.addEventListener('click', () =>
-  navigateTo('https://www.reddit.com/r/Devvit')
-);
-discordLink?.addEventListener('click', () =>
-  navigateTo('https://discord.com/invite/R7yu2wh9Qz')
-);
-
-// --- Task 1 API wiring ---
-const isLocal: boolean =
-  window.location.hostname === 'localhost' ||
-  window.location.hostname === '127.0.0.1';
+const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 const gameApi: GameApi = isLocal ? mockApi : api;
 
-let currentDayId: string | null = null;
+const KNOWN_CUSTOMERS: ReadonlySet<CustomerId> = new Set([
+  'giant', 'fairy', 'ghost', 'surfer', 'crab_mister', 'mermaid', 'yeti', 'skier', 'grandma_bear',
+]);
+const KNOWN_LOCATIONS: ReadonlySet<string> = new Set(['cafe', 'beach', 'chalet']);
 
-async function fetchInitial(): Promise<void> {
-  try {
-    const { player, today } = await gameApi.init();
-    currentDayId = today.dayId;
-    titleElement.textContent = `Hey ${player.username} 👋`;
-    console.log(
-      `[aguamesa] Task 1 skeleton — ${isLocal ? 'mockApi' : 'api'} — ` +
-        `night #${today.night} (${today.dayId}), ${today.glasses.length} glasses, ` +
-        `player ${player.username}, streak 🔥${player.streak}`
-    );
-  } catch (err) {
-    console.error('Error fetching init:', err);
-  }
-}
-
-// --- Template Three.js scene, unchanged below ---
 const canvas = document.getElementById('bg') as HTMLCanvasElement;
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x000000);
+const game = createScene(canvas);
+game.start();
 
-const camera = new THREE.PerspectiveCamera(
-  75,
-  window.innerWidth / window.innerHeight,
-  0.1,
-  1000
-);
-camera.position.z = 30;
-
-const renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
-renderer.setPixelRatio(window.devicePixelRatio ?? 1);
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setClearColor(0x000000, 1);
-
-camera.lookAt(0, 0, 0);
-
-renderer.render(scene, camera);
-
-// Resize handler
-window.addEventListener('resize', () => {
-  const { innerWidth, innerHeight } = window;
-  camera.aspect = innerWidth / innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth, innerHeight);
-});
-
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
-scene.add(ambientLight);
-const pointLight = new THREE.PointLight(0xffffff, 1);
-pointLight.position.set(10, 10, 10);
-scene.add(pointLight);
-
-const textureLoader = new THREE.TextureLoader();
-textureLoader.crossOrigin = '';
-
-const earthTexture = textureLoader.load('/earth_atmos_2048.jpg');
-const earthNormalMap = textureLoader.load('/earth_normal_2048.jpg');
-const earthSpecularMap = textureLoader.load('/earth_specular_2048.jpg');
-
-earthTexture.colorSpace = THREE.SRGBColorSpace;
-earthNormalMap.colorSpace = THREE.NoColorSpace;
-earthSpecularMap.colorSpace = THREE.NoColorSpace;
-
-const earthGeo = new THREE.SphereGeometry(10, 64, 64);
-const earthMat = new THREE.MeshPhongMaterial({
-  map: earthTexture,
-  normalMap: earthNormalMap,
-  specularMap: earthSpecularMap,
-  shininess: 5,
-});
-const earthSphere = new THREE.Mesh(earthGeo, earthMat);
-
-const planetGroup = new THREE.Group();
-planetGroup.add(earthSphere);
-scene.add(planetGroup);
-
-function addStar(): void {
-  const starGeo = new THREE.SphereGeometry(0.25, 24, 24);
-  const starMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
-  const star = new THREE.Mesh(starGeo, starMat);
-
-  const x = THREE.MathUtils.randFloatSpread(200);
-  const y = THREE.MathUtils.randFloatSpread(200);
-  const z = THREE.MathUtils.randFloatSpread(200);
-  star.position.set(x, y, z);
-  scene.add(star);
-}
-Array.from({ length: 200 }).forEach(addStar);
-
-const raycaster = new THREE.Raycaster();
-const mouse = new THREE.Vector2();
-
-let scaleVelocity = 0;
-
-function handleClick(event: PointerEvent): void {
-  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-  raycaster.setFromCamera(mouse, camera);
-  const intersects = raycaster.intersectObject(earthSphere);
-  if (intersects.length > 0) {
-    // Start gentle bounce
-    scaleVelocity = 0.05;
-    // Task 1 stub: clicking the planet calls the stubbed /api/pour.
-    // It always returns the §10.2 example (score 97) for now.
-    if (currentDayId !== null) {
-      void gameApi
-        .pour({ dayId: currentDayId, glassIndex: 0, holdMs: 500 })
-        .then((result) => console.log('[aguamesa] pour stub:', result))
-        .catch((err: unknown) => console.error('Error pouring:', err));
-    }
-  }
+let activeScreen: Screen | null = null;
+function closeScreen(): void {
+  activeScreen?.unmount();
+  activeScreen = null;
 }
 
-window.addEventListener('pointerdown', handleClick);
-
-function animate(): void {
-  requestAnimationFrame(animate);
-
-  planetGroup.rotation.y += 0.0025;
-  planetGroup.rotation.x += 0.001;
-
-  if (scaleVelocity !== 0) {
-    const newScale = planetGroup.scale.x + scaleVelocity;
-    planetGroup.scale.set(newScale, newScale, newScale);
-
-    if (newScale >= 1.2) scaleVelocity = -0.04;
-    if (newScale <= 1) {
-      planetGroup.scale.set(1, 1, 1);
-      scaleVelocity = 0;
-    }
+async function playTonight(today: DailyService): Promise<void> {
+  const locationId = KNOWN_LOCATIONS.has(today.location) ? (today.location as 'cafe' | 'beach' | 'chalet') : 'cafe';
+  if (locationId !== today.location) {
+    console.warn(`[aguamesa] lieu "${today.location}" pas encore construit, cafe par defaut`);
   }
 
-  renderer.render(scene, camera);
+  const loc = await loadLocation(game, locationId);
+  // La caméra du lieu montre tout le décor ; pour verser, on se rapproche du verre
+  // (sinon il fait quelques pixels sur un téléphone).
+  game.camera.position.set(0, 0.3, -0.5);
+  game.camera.lookAt(0.08, 0.12, 0.3);
+  const sound = createGameAudio();
+  const stage = createGlassStage({
+    game,
+    inputElement: canvas,
+    placeGlass: (root) => loc.placeGlass(root),
+    sound,
+  });
+
+  let activeCustomer: Customer | null = null;
+
+  await playNight({
+    today,
+    api: gameApi,
+    playGlass: stage.playGlass,
+    events: {
+      onGlassStart: (_index, spec) => {
+        activeCustomer?.dispose();
+        activeCustomer = null;
+        const id = spec.customer as CustomerId;
+        if (!KNOWN_CUSTOMERS.has(id)) {
+          console.warn(`[aguamesa] client "${spec.customer}" pas encore construit, verre sans client`);
+          return;
+        }
+        spawnCustomer(game, id, new THREE.Vector3(0.35, 0, 0.35))
+          .then((c) => {
+            activeCustomer = c;
+          })
+          .catch((err: unknown) => console.error('spawnCustomer:', err));
+      },
+      onPourEnd: (_index, outcome) => activeCustomer?.reactTo(outcome),
+      onServerResult: (index, result) => stage.showCrowd(index, result),
+      onGlassSkipped: (index) => console.log(`[aguamesa] verre ${index + 1} deja joue aujourd'hui`),
+      onError: (err) => console.error('[aguamesa] nuit:', err),
+      onNightEnd: (summary) => {
+        activeCustomer?.dispose();
+        activeCustomer = null;
+        stage.clear();
+        sound.dispose();
+        closeScreen();
+        activeScreen = showNightResult(summary, {
+          onShare: () => {
+            void gameApi.share(summary.dayId).catch((err: unknown) => console.error('share:', err));
+          },
+          onClose: () => {
+            closeScreen();
+            void boot();
+          },
+        });
+      },
+    },
+  });
 }
 
-void fetchInitial();
-animate();
+async function boot(): Promise<void> {
+  closeScreen();
+  const { player, today } = await gameApi.init();
+  console.log(`[aguamesa] nuit #${today.night} (${today.dayId}), lieu ${today.location}, streak 🔥${player.streak}`);
+
+  activeScreen = showHome(player, {
+    onServir: () => {
+      closeScreen();
+      playTonight(today).catch((err: unknown) => console.error('[aguamesa] playTonight:', err));
+    },
+    onCarte: () => {
+      closeScreen();
+      const unlocked = new Set<'cafe' | 'beach' | 'chalet'>(['cafe', 'beach', 'chalet']);
+      void loadMap(game, unlocked, (id) => console.log('[aguamesa] carte: entrer dans', id)).then((map) => {
+        const backBtn = document.createElement('button');
+        backBtn.className = 'btn btn--icon btn--ghost';
+        backBtn.textContent = '←';
+        backBtn.style.cssText = 'position:fixed;top:max(16px,env(safe-area-inset-top));left:16px;z-index:20;';
+        backBtn.addEventListener('click', () => {
+          map.dispose();
+          backBtn.remove();
+          void boot();
+        });
+        document.body.appendChild(backBtn);
+      });
+    },
+    onClassement: () => {
+      closeScreen();
+      void gameApi.leaderboard('day').then((day) => {
+        void gameApi.leaderboard('all').then((all) => {
+          activeScreen = showLeaderboard(
+            { day, all, currentUsername: player.username },
+            { onClose: () => void boot() },
+          );
+        });
+      });
+    },
+    onEtagere: () => {
+      closeScreen();
+      activeScreen = showShelf(player.collection, { onClose: () => void boot() });
+    },
+  });
+}
+
+boot().catch((err: unknown) => console.error('[aguamesa] boot:', err));
