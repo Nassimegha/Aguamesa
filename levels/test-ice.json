@@ -1,0 +1,10 @@
+{
+  "id": "test-ice",
+  "location": "cafe",
+  "glasses": [
+    { "model": "pint", "line": 0.72, "flow": 1.0, "twist": "ice", "customer": "giant" },
+    { "model": "goblet", "line": 0.70, "flow": 1.0, "twist": "ice", "customer": "fairy" },
+    { "model": "tankard", "line": 0.80, "flow": 1.0, "twist": "ice", "customer": "ghost" }
+  ],
+  "stars": [150, 210, 255]
+}

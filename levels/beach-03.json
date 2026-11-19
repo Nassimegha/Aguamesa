@@ -1,0 +1,11 @@
+{
+  "id": "beach-03",
+  "location": "beach",
+  "glasses": [
+    {"model": "flute", "line": 0.68, "flow": 0.75, "twist": "none", "customer": "mermaid"},
+    {"model": "coconut", "line": 0.78, "flow": 0.85, "twist": "none", "customer": "surfer"},
+    {"model": "pint", "line": 0.6, "flow": 0.95, "twist": "none", "customer": "crab_mister"},
+    {"model": "goblet", "line": 0.66, "flow": 0.95, "twist": "none", "customer": "mermaid"}
+  ],
+  "stars": [240, 300, 360]
+}

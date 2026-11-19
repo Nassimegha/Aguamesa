@@ -1,0 +1,10 @@
+{
+  "id": "test-sizes",
+  "location": "cafe",
+  "glasses": [
+    { "model": "mug_giant", "line": 0.78, "flow": 1.0, "twist": "none", "customer": "giant" },
+    { "model": "thimble", "line": 0.60, "flow": 0.6, "twist": "none", "customer": "fairy" },
+    { "model": "pint", "line": 0.70, "flow": 1.0, "twist": "none", "customer": "ghost" }
+  ],
+  "stars": [150, 210, 255]
+}

@@ -10,6 +10,7 @@
     "dev": "devvit playtest",
     "dev:local": "vite --config tools/vite.local.ts",
     "launch": "npm run deploy && devvit publish",
+    "levels": "node --experimental-strip-types --no-warnings=ExperimentalWarning src/client/game/dev/buildLevels.ts",
     "lint": "eslint 'src/**/*.{ts,tsx}'",
     "login": "devvit login",
     "prettier": "prettier --write .",

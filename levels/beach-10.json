@@ -1,0 +1,12 @@
+{
+  "id": "beach-10",
+  "location": "beach",
+  "glasses": [
+    {"model": "flute", "line": 0.82, "flow": 1, "twist": "layers3", "customer": "mermaid"},
+    {"model": "coconut", "line": 0.72, "flow": 1.15, "twist": "tilt", "customer": "surfer"},
+    {"model": "goblet", "line": 0.66, "flow": 0.85, "twist": "hidden_line", "customer": "crab_mister"},
+    {"model": "pint", "line": 0.8, "flow": 1.3, "twist": "layers2", "customer": "crab_mister"},
+    {"model": "thimble", "line": 0.62, "flow": 0.7, "twist": "ice", "customer": "mermaid"}
+  ],
+  "stars": [235, 315, 405]
+}

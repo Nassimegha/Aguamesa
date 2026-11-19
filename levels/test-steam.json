@@ -1,0 +1,10 @@
+{
+  "id": "test-steam",
+  "location": "cafe",
+  "glasses": [
+    { "model": "teacup", "line": 0.72, "flow": 1.0, "twist": "steam", "customer": "giant" },
+    { "model": "goblet", "line": 0.80, "flow": 1.0, "twist": "steam", "customer": "fairy" },
+    { "model": "mug_giant", "line": 0.82, "flow": 1.0, "twist": "steam", "customer": "ghost" }
+  ],
+  "stars": [150, 210, 255]
+}

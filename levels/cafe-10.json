@@ -1,0 +1,12 @@
+{
+  "id": "cafe-10",
+  "location": "cafe",
+  "glasses": [
+    {"model": "mug_giant", "line": 0.84, "flow": 1.35, "twist": "layers3", "customer": "giant"},
+    {"model": "thimble", "line": 0.62, "flow": 0.5, "twist": "hidden_line", "customer": "fairy"},
+    {"model": "pint", "line": 0.74, "flow": 1.2, "twist": "foam", "customer": "giant"},
+    {"model": "teacup", "line": 0.75, "flow": 0.9, "twist": "steam", "customer": "fairy"},
+    {"model": "tankard", "line": 0.82, "flow": 1.4, "twist": "layers2", "customer": "ghost"}
+  ],
+  "stars": [235, 315, 410]
+}

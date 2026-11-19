@@ -1,0 +1,10 @@
+{
+  "id": "beach-01",
+  "location": "beach",
+  "glasses": [
+    {"model": "coconut", "line": 0.7, "flow": 0.9, "twist": "none", "customer": "surfer"},
+    {"model": "flute", "line": 0.6, "flow": 0.75, "twist": "none", "customer": "mermaid"},
+    {"model": "pint", "line": 0.72, "flow": 1, "twist": "none", "customer": "crab_mister"}
+  ],
+  "stars": [180, 225, 265]
+}

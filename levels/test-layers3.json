@@ -1,0 +1,10 @@
+{
+  "id": "test-layers3",
+  "location": "cafe",
+  "glasses": [
+    { "model": "pint", "line": 0.84, "flow": 0.9, "twist": "layers3", "customer": "giant" },
+    { "model": "tankard", "line": 0.78, "flow": 0.9, "twist": "layers3", "customer": "fairy" },
+    { "model": "mug_giant", "line": 0.86, "flow": 1.0, "twist": "layers3", "customer": "ghost" }
+  ],
+  "stars": [150, 210, 255]
+}

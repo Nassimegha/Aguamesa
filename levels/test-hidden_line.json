@@ -1,0 +1,10 @@
+{
+  "id": "test-hidden_line",
+  "location": "cafe",
+  "glasses": [
+    { "model": "pint", "line": 0.66, "flow": 1.0, "twist": "hidden_line", "customer": "giant" },
+    { "model": "flute", "line": 0.72, "flow": 0.9, "twist": "hidden_line", "customer": "fairy" },
+    { "model": "thimble", "line": 0.58, "flow": 0.6, "twist": "hidden_line", "customer": "ghost" }
+  ],
+  "stars": [150, 210, 255]
+}

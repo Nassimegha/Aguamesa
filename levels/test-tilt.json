@@ -1,0 +1,10 @@
+{
+  "id": "test-tilt",
+  "location": "cafe",
+  "glasses": [
+    { "model": "tankard", "line": 0.82, "flow": 1.1, "twist": "tilt", "customer": "giant" },
+    { "model": "pint", "line": 0.86, "flow": 1.0, "twist": "tilt", "customer": "fairy" },
+    { "model": "teacup", "line": 0.75, "flow": 1.0, "twist": "tilt", "customer": "ghost" }
+  ],
+  "stars": [150, 210, 255]
+}

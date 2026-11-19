@@ -1,0 +1,12 @@
+{
+  "id": "chalet-08",
+  "location": "chalet",
+  "glasses": [
+    {"model": "mug_giant", "line": 0.76, "flow": 1.4, "twist": "foam", "customer": "yeti"},
+    {"model": "teacup", "line": 0.72, "flow": 0.9, "twist": "steam", "customer": "grandma_bear"},
+    {"model": "tankard", "line": 0.8, "flow": 1.4, "twist": "layers2", "customer": "skier"},
+    {"model": "goblet", "line": 0.7, "flow": 1.15, "twist": "leak", "customer": "grandma_bear"},
+    {"model": "thimble", "line": 0.6, "flow": 0.8, "twist": "none", "customer": "skier"}
+  ],
+  "stars": [235, 315, 410]
+}

@@ -1,0 +1,10 @@
+{
+  "id": "test-spin",
+  "location": "cafe",
+  "glasses": [
+    { "model": "pint", "line": 0.70, "flow": 1.0, "twist": "spin", "customer": "giant" },
+    { "model": "flute", "line": 0.62, "flow": 0.9, "twist": "spin", "customer": "fairy" },
+    { "model": "goblet", "line": 0.68, "flow": 1.0, "twist": "spin", "customer": "ghost" }
+  ],
+  "stars": [150, 210, 255]
+}
