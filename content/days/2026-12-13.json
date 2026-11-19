@@ -1,0 +1,14 @@
+{
+  "dayId": "2026-12-13",
+  "night": 43,
+  "location": "cafe",
+  "special": "sunday_boss",
+  "drinkOfTheDay": "Café liégeois royal",
+  "glasses": [
+    { "model": "pint", "line": 0.78, "flow": 1.1, "twist": "spin", "customer": "barista" },
+    { "model": "mug_giant", "line": 0.82, "flow": 1.0, "twist": "tilt", "customer": "giant" },
+    { "model": "goblet", "line": 0.76, "flow": 1.0, "twist": "leak", "customer": "ghost" },
+    { "model": "teacup", "line": 0.7, "flow": 0.9, "twist": "steam", "customer": "owl" },
+    { "model": "tankard", "line": 0.8, "flow": 1.0, "twist": "layers3", "customer": "pirate" }
+  ]
+}

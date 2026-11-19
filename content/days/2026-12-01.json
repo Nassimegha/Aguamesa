@@ -1,0 +1,13 @@
+{
+  "dayId": "2026-12-01",
+  "night": 31,
+  "location": "cafe",
+  "drinkOfTheDay": "Chocolat viennois",
+  "glasses": [
+    { "model": "pint", "line": 0.7, "flow": 1.0, "twist": "none", "customer": "giant" },
+    { "model": "thimble", "line": 0.62, "flow": 0.7, "twist": "none", "customer": "fairy" },
+    { "model": "goblet", "line": 0.72, "flow": 1.0, "twist": "steam", "customer": "ghost" },
+    { "model": "tankard", "line": 0.76, "flow": 1.0, "twist": "foam", "customer": "pirate" },
+    { "model": "flute", "line": 0.66, "flow": 0.9, "twist": "none", "customer": "wizard" }
+  ]
+}

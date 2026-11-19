@@ -1,0 +1,16 @@
+{
+  "dayId": "2026-12-12",
+  "night": 42,
+  "location": "castle",
+  "special": "saturday_rush",
+  "drinkOfTheDay": "Hydromel hanté",
+  "glasses": [
+    { "model": "goblet", "line": 0.78, "flow": 1.1, "twist": "steam", "customer": "ghost" },
+    { "model": "pint", "line": 0.8, "flow": 1.1, "twist": "tilt", "customer": "pirate" },
+    { "model": "flute", "line": 0.74, "flow": 1.0, "twist": "layers2", "customer": "wizard" },
+    { "model": "tankard", "line": 0.82, "flow": 1.1, "twist": "foam", "customer": "giant" },
+    { "model": "teacup", "line": 0.68, "flow": 0.9, "twist": "leak", "customer": "owl" },
+    { "model": "coconut", "line": 0.72, "flow": 1.0, "twist": "ice", "customer": "fairy" },
+    { "model": "thimble", "line": 0.64, "flow": 0.8, "twist": "none", "customer": "barista" }
+  ]
+}

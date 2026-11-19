@@ -1,0 +1,13 @@
+{
+  "dayId": "2026-12-02",
+  "night": 32,
+  "location": "beach",
+  "drinkOfTheDay": "Jus de coco glacé",
+  "glasses": [
+    { "model": "coconut", "line": 0.68, "flow": 1.0, "twist": "none", "customer": "sailor" },
+    { "model": "pint", "line": 0.74, "flow": 1.1, "twist": "ice", "customer": "giant" },
+    { "model": "teacup", "line": 0.6, "flow": 0.8, "twist": "none", "customer": "owl" },
+    { "model": "goblet", "line": 0.7, "flow": 1.0, "twist": "steam", "customer": "fairy" },
+    { "model": "tankard", "line": 0.78, "flow": 1.0, "twist": "foam", "customer": "ghost" }
+  ]
+}

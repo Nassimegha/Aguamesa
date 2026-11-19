@@ -1,0 +1,13 @@
+{
+  "dayId": "2026-12-03",
+  "night": 33,
+  "location": "chalet",
+  "drinkOfTheDay": "Vin chaud aux épices",
+  "glasses": [
+    { "model": "mug_giant", "line": 0.8, "flow": 1.0, "twist": "none", "customer": "giant" },
+    { "model": "flute", "line": 0.72, "flow": 1.0, "twist": "tilt", "customer": "wizard" },
+    { "model": "pint", "line": 0.76, "flow": 1.1, "twist": "ice", "customer": "sailor" },
+    { "model": "teacup", "line": 0.64, "flow": 0.9, "twist": "none", "customer": "barista" },
+    { "model": "goblet", "line": 0.74, "flow": 1.0, "twist": "steam", "customer": "owl" }
+  ]
+}

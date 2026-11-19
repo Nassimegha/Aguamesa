@@ -1,6 +1,12 @@
 {
   "$schema": "https://developers.reddit.com/schema/config-file.v1.json",
   "name": "aguamesa0test",
+  "permissions": {
+    "redis": true,
+    "reddit": {
+      "scope": "user"
+    }
+  },
   "post": {
     "dir": "dist/client",
     "entrypoints": {
@@ -32,8 +38,30 @@
         "location": "subreddit",
         "forUserType": "moderator",
         "endpoint": "/internal/menu/example-form"
+      },
+      {
+        "label": "Publier la nuit maintenant",
+        "description": "Publish tonight's Service du Jour post right now (no waiting for midnight)",
+        "location": "subreddit",
+        "forUserType": "moderator",
+        "endpoint": "/internal/menu/publish-now"
+      },
+      {
+        "label": "Choisir la boisson du jour",
+        "description": "Validate the top !boisson comment as the next day's drink",
+        "location": "post",
+        "forUserType": "moderator",
+        "endpoint": "/internal/menu/drink-pick"
       }
     ]
+  },
+  "scheduler": {
+    "tasks": {
+      "daily-night": {
+        "endpoint": "/internal/scheduler/daily-night",
+        "cron": "0 0 * * *"
+      }
+    }
   },
   "forms": {
     "exampleForm": "/internal/form/example-submit"

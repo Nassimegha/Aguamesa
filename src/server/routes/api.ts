@@ -1,152 +1,238 @@
-// src/server/routes/api.ts — P3 (Task 1 skeleton)
+// src/server/routes/api.ts — P3 (Task 2: real /init, /pour, /level/complete)
 // MERGED version: this REPLACES the template's counter router.
-// Template mounted this router at /api in src/server/index.ts
+// Template mounts this router at /api in src/server/index.ts
 // (app.route('/api', api)), so routes here are '/init', '/pour', etc.
 // — NOT '/api/init'. Do not add the /api prefix here.
 //
-// All 7 endpoints from contract 00 §6.2, STUBBED: each returns the
-// §10 example payload (or, where §10 has no example, a derived stub
-// consistent with it). No Redis, no real scoring, no Reddit posting yet.
-// That is Task 2 (score) and Task 4 (share/flair).
+// Task 1 stubbed all 7 endpoints from contract 00 §6.2; Tasks 2-4 made
+// them real (Redis, server score, streaks, leaderboards, share, flair).
+// /decor/buy persists but is free: prices are not in the contract, and
+// decor is first on the cut list (§12).
 // Types live in src/shared/types.ts (verbatim §6.1).
-
 import { Hono } from 'hono';
-import type {
-  DailyService,
-  LeaderboardRow,
-  NightSummary,
-  PlayerState,
-  PourRequest,
-  PourResult,
-} from '../../shared/types';
+import type { Context as HonoContext } from 'hono';
+import { context, redis } from '@devvit/web/server';
+import { resolvePostDay } from '../content';
+import { liveDrinkForDay, withLiveDrink } from '../drink';
+import { refreshFlair } from '../flair';
+import { getLeaderboard, type BoardScope } from '../leaderboard';
+import { finishNight } from '../night';
+import { checkRateLimit, type RateLimit } from '../rateLimit';
+import { shareNight } from '../share';
+import { createCommentPoster, createFlairSetter } from '../social';
+import { getLevel, starsForTotal } from '../levels';
+import { getPlayedToday, loadOrCreatePlayer, savePlayer } from '../player';
+import type { Store } from '../redis';
+import { pourGlass } from '../score';
+
+// Devvit's client satisfies Store structurally; this line fails the type
+// check if the two ever drift apart.
+const store: Store = redis;
+const commentPoster = createCommentPoster();
+const flairSetter = createFlairSetter();
 
 export const api = new Hono();
 
-/** §10.1 — verbatim. */
-const mockPlayer: PlayerState = {
-  username: 'nassime',
-  serverLevel: 12,
-  streak: 12,
-  bestStreak: 15,
-  streakFreezes: 1,
-  lastPlayedDayId: '2026-11-23',
-  tips: 340,
-  stars: { 'cafe-01': 3, 'cafe-02': 2 },
-  collection: ['pint', 'thimble'],
-  decor: ['lamp_warm'],
-  playedToday: [false, false, false, false, false],
+/**
+ * Per-user, per-minute budgets (Task 6). Generous for real play — 5
+ * pours plus retries and double taps fit easily — tight enough to blunt
+ * farms and stuck retry loops. Logged-out traffic skips this: every
+ * route 401s it anyway.
+ */
+const RATE_LIMITS: Record<string, RateLimit> = {
+  '/init': { limit: 60, windowSec: 60 },
+  '/pour': { limit: 30, windowSec: 60 },
+  '/night/finish': { limit: 10, windowSec: 60 },
+  '/share': { limit: 5, windowSec: 60 },
+  '/leaderboard': { limit: 60, windowSec: 60 },
+  '/level/complete': { limit: 30, windowSec: 60 },
+  '/decor/buy': { limit: 30, windowSec: 60 },
 };
 
-/** §10.1 — verbatim. */
-const mockToday: DailyService = {
-  dayId: '2026-11-24',
-  night: 24,
-  location: 'cafe',
-  glasses: [
-    { model: 'mug_giant', line: 0.78, flow: 1.0, twist: 'none', customer: 'giant' },
-    { model: 'thimble', line: 0.6, flow: 0.6, twist: 'none', customer: 'fairy' },
-    { model: 'goblet', line: 0.7, flow: 1.0, twist: 'steam', customer: 'ghost' },
-    { model: 'tankard', line: 0.82, flow: 1.1, twist: 'tilt', customer: 'pirate' },
-    { model: 'flute', line: 0.65, flow: 0.9, twist: 'layers2', customer: 'wizard' },
-  ],
-};
-
-/** §10.2 — verbatim. */
-const mockPourResult: PourResult = {
-  score: 97,
-  level: 0.775,
-  overflow: false,
-  crowdLine: 0.71,
-  beatPercent: 82,
-};
-
-/** DERIVED stub — no §10 example for /night/finish. tips/rank are stub values. */
-const mockNightSummary: NightSummary = {
-  dayId: '2026-11-24',
-  scores: [98, 100, 71, 88, 94],
-  total: 451,
-  tips: 135,
-  streak: 12,
-  freezeUsed: false,
-  rank: 3,
-  shareText: '☕ Nuit #24 🍺98 🧚100 👻71 ⛵88 🧙94 = 451 · 🔥12',
-};
-
-/** DERIVED stub — no §10 example for /leaderboard. */
-const mockLeaderboard: LeaderboardRow[] = [
-  { rank: 1, username: 'nassime', total: 451, streak: 12 },
-  { rank: 2, username: 'marwa', total: 432, streak: 9 },
-  { rank: 3, username: 'mohamed', total: 418, streak: 12 },
-];
-
-/** GET /init — mounted as /api/init. Returns §10.1 verbatim. */
-api.get('/init', (c) => {
-  return c.json({ player: mockPlayer, today: mockToday });
+api.use(async (c, next) => {
+  const username = loggedInUser();
+  const route = c.req.path.replace(/^\/api/, '');
+  const rule = RATE_LIMITS[route];
+  if (username !== undefined && rule !== undefined) {
+    const check = await checkRateLimit(store, username, route, rule);
+    if (!check.allowed) {
+      return c.json({ error: 'Too many requests, slow down a little' }, 429);
+    }
+  }
+  await next();
 });
 
-/** POST /pour — stub: always returns §10.2, whatever holdMs is sent. */
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+async function readBody(c: HonoContext): Promise<unknown> {
+  try {
+    return await c.req.json();
+  } catch {
+    return undefined;
+  }
+}
+
+function loggedInUser(): string | undefined {
+  return context.username;
+}
+
+
+
+/** GET /init — real: profile from Redis, day from the post. */
+api.get('/init', async (c) => {
+  const username = loggedInUser();
+  if (username === undefined) {
+    return c.json({ error: 'Login required' }, 401);
+  }
+  const day = resolvePostDay(context.postData);
+  const player = await loadOrCreatePlayer(store, username);
+  const playedToday = await getPlayedToday(store, day.dayId, username, day.glasses.length);
+  const today = withLiveDrink(day, await liveDrinkForDay(store, day.dayId));
+  return c.json({ player: { ...player, playedToday }, today });
+});
+
+/** POST /pour — real: server score, one try per glass (replay = stored). */
 api.post('/pour', async (c) => {
-  const body = (await c.req.json().catch(() => null)) as PourRequest | null;
-  if (body === null || typeof body.glassIndex !== 'number') {
+  const username = loggedInUser();
+  if (username === undefined) {
+    return c.json({ error: 'Login required' }, 401);
+  }
+  const body = await readBody(c);
+  if (!isRecord(body)) {
     return c.json({ error: 'Expected a PourRequest: { dayId, glassIndex, holdMs }' }, 400);
   }
-  void body;
-  return c.json(mockPourResult);
+  const { dayId, glassIndex, holdMs } = body;
+  if (typeof dayId !== 'string' || typeof glassIndex !== 'number' || typeof holdMs !== 'number') {
+    return c.json({ error: 'Expected a PourRequest: { dayId, glassIndex, holdMs }' }, 400);
+  }
+  const day = resolvePostDay(context.postData);
+  const outcome = await pourGlass(store, day, { username, dayId, glassIndex, holdMs });
+  if (!outcome.ok) {
+    return c.json({ error: outcome.error }, 400);
+  }
+  return c.json(outcome.result);
 });
 
-/** POST /night/finish — stub, derived mockNightSummary. */
+/** POST /night/finish — real: totals, tips, streak, rank, shareText. */
 api.post('/night/finish', async (c) => {
-  const body = (await c.req.json().catch(() => null)) as { dayId?: string } | null;
-  if (body === null || typeof body.dayId !== 'string') {
+  const username = loggedInUser();
+  if (username === undefined) {
+    return c.json({ error: 'Login required' }, 401);
+  }
+  const body = await readBody(c);
+  if (!isRecord(body) || typeof body['dayId'] !== 'string') {
     return c.json({ error: 'Expected { dayId }' }, 400);
   }
-  return c.json({ ...mockNightSummary, dayId: body.dayId });
+  const day = resolvePostDay(context.postData);
+  if (body['dayId'] !== day.dayId) {
+    return c.json({ error: `Stale day: post plays ${day.dayId}` }, 400);
+  }
+  const player = await loadOrCreatePlayer(store, username);
+  const outcome = await finishNight(store, day, username, player);
+  if (!outcome.ok) {
+    return c.json({ error: outcome.error }, 400);
+  }
+  // Flair is best-effort: it must never fail a finished night.
+  const fresh = await loadOrCreatePlayer(store, username);
+  const flair = await refreshFlair(flairSetter, context.subredditName, fresh);
+  if (!flair.ok) {
+    console.error(`[aguamesa] flair refresh failed for ${username}: ${flair.error}`);
+  }
+  return c.json(outcome.summary);
 });
 
-/** POST /share — stub: fake commentUrl, NO comment is really posted. */
+/** POST /share — real: posts the score comment as the player, once per night. */
 api.post('/share', async (c) => {
-  const body = (await c.req.json().catch(() => null)) as { dayId?: string } | null;
-  if (body === null || typeof body.dayId !== 'string') {
+  const username = loggedInUser();
+  if (username === undefined) {
+    return c.json({ error: 'Login required' }, 401);
+  }
+  const body = await readBody(c);
+  if (!isRecord(body) || typeof body['dayId'] !== 'string') {
     return c.json({ error: 'Expected { dayId }' }, 400);
   }
-  return c.json({
-    commentUrl: 'https://www.reddit.com/r/aguamesa_dev/comments/mock-night-24/',
-  });
+  const day = resolvePostDay(context.postData);
+  if (body['dayId'] !== day.dayId) {
+    return c.json({ error: `Stale day: post plays ${day.dayId}` }, 400);
+  }
+  const postId = context.postId;
+  if (postId === undefined) {
+    return c.json({ error: 'Share from inside the nightly post' }, 400);
+  }
+  const outcome = await shareNight(store, commentPoster, day.dayId, username, postId);
+  if (!outcome.ok) {
+    return c.json({ error: outcome.error }, 400);
+  }
+  return c.json({ commentUrl: outcome.commentUrl });
 });
 
-/** GET /leaderboard?scope=day|all — stub, same rows for both scopes. */
-api.get('/leaderboard', (c) => {
-  const scope = c.req.query('scope');
-  if (scope !== undefined && scope !== 'day' && scope !== 'all') {
+/** GET /leaderboard?scope=day|all — real: top 50 plus the caller. */
+api.get('/leaderboard', async (c) => {
+  const username = loggedInUser();
+  if (username === undefined) {
+    return c.json({ error: 'Login required' }, 401);
+  }
+  const scopeParam = c.req.query('scope');
+  if (scopeParam !== undefined && scopeParam !== 'day' && scopeParam !== 'all') {
     return c.json({ error: 'Expected scope=day or scope=all' }, 400);
   }
-  void scope;
-  return c.json(mockLeaderboard);
+  const scope: BoardScope = scopeParam === 'all' ? 'all' : 'day';
+  const day = resolvePostDay(context.postData);
+  return c.json(await getLeaderboard(store, scope, day.dayId, username));
 });
 
-/** POST /level/complete — stub: fixed 2 stars. */
+/**
+ * POST /level/complete — real thresholds, empty registry: P1's
+ * levels/*.json are not delivered yet, so every levelId 404s until then.
+ * No star formula is invented; thresholds come from each Level.
+ */
 api.post('/level/complete', async (c) => {
-  const body = (await c.req.json().catch(() => null)) as {
-    levelId?: string;
-    scores?: number[];
-  } | null;
-  if (body === null || typeof body.levelId !== 'string' || !Array.isArray(body.scores)) {
+  const username = loggedInUser();
+  if (username === undefined) {
+    return c.json({ error: 'Login required' }, 401);
+  }
+  const body = await readBody(c);
+  if (!isRecord(body)) {
     return c.json({ error: 'Expected { levelId, scores: number[] }' }, 400);
   }
-  return c.json({
-    stars: 2,
-    player: { ...mockPlayer, stars: { ...mockPlayer.stars, [body.levelId]: 2 } },
-  });
+  const { levelId, scores } = body;
+  if (
+    typeof levelId !== 'string' ||
+    !Array.isArray(scores) ||
+    !scores.every((s): s is number => typeof s === 'number')
+  ) {
+    return c.json({ error: 'Expected { levelId, scores: number[] }' }, 400);
+  }
+  const level = getLevel(levelId);
+  if (level === undefined) {
+    return c.json({ error: `Unknown level ${levelId}: P1's levels/*.json are not delivered yet` }, 404);
+  }
+  const total = scores.reduce((sum, s) => sum + s, 0);
+  const stars = starsForTotal(level, total);
+  const player = await loadOrCreatePlayer(store, username);
+  const best = Math.max(player.stars[levelId] ?? 0, stars);
+  const updated = { ...player, stars: { ...player.stars, [levelId]: best } };
+  await savePlayer(store, updated);
+  return c.json({ stars, player: updated });
 });
 
-/** POST /decor/buy — stub: returns mock player with item added, no tips deducted. */
+/** POST /decor/buy — persisted, but free: decor prices are not in the contract (§12 cut list). */
 api.post('/decor/buy', async (c) => {
-  const body = (await c.req.json().catch(() => null)) as { item?: string } | null;
-  if (body === null || typeof body.item !== 'string') {
+  const username = loggedInUser();
+  if (username === undefined) {
+    return c.json({ error: 'Login required' }, 401);
+  }
+  const body = await readBody(c);
+  if (!isRecord(body) || typeof body['item'] !== 'string') {
     return c.json({ error: 'Expected { item }' }, 400);
   }
-  const decor = mockPlayer.decor.includes(body.item)
-    ? mockPlayer.decor
-    : [...mockPlayer.decor, body.item];
-  return c.json({ ...mockPlayer, decor });
+  const player = await loadOrCreatePlayer(store, username);
+  if (!player.decor.includes(body['item'])) {
+    const updated = { ...player, decor: [...player.decor, body['item']] };
+    await savePlayer(store, updated);
+    return c.json(updated);
+  }
+  return c.json(player);
 });

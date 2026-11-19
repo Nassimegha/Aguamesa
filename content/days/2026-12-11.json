@@ -1,0 +1,14 @@
+{
+  "dayId": "2026-12-11",
+  "night": 41,
+  "location": "pirate",
+  "special": "blind_friday",
+  "drinkOfTheDay": "Grog du capitaine",
+  "glasses": [
+    { "model": "tankard", "line": 0.78, "flow": 1.0, "twist": "hidden_line", "customer": "pirate" },
+    { "model": "pint", "line": 0.74, "flow": 1.0, "twist": "hidden_line", "customer": "giant" },
+    { "model": "goblet", "line": 0.72, "flow": 1.0, "twist": "hidden_line", "customer": "ghost" },
+    { "model": "flute", "line": 0.68, "flow": 0.9, "twist": "hidden_line", "customer": "wizard" },
+    { "model": "coconut", "line": 0.66, "flow": 0.9, "twist": "hidden_line", "customer": "sailor" }
+  ]
+}

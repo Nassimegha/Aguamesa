@@ -65,4 +65,13 @@ export default defineConfig([
     plugins: { js },
     extends: ['js/recommended'],
   },
+  {
+    // node:test's test()/describe() return promises the runner owns;
+    // awaiting them is wrong, so the floating rule is off in tests.
+    // This block must stay LAST: later blocks win in flat config.
+    files: ['src/**/*.test.ts'],
+    rules: {
+      '@typescript-eslint/no-floating-promises': 'off',
+    },
+  },
 ]);

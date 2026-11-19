@@ -4,15 +4,36 @@
     "outDir": "../dist/types/server",
     "tsBuildInfoFile": "../dist/types/server/tsconfig.tsbuildinfo",
     "customConditions": [],
-    "types": ["node"],
+    "types": [
+      "node"
+    ],
     "exactOptionalPropertyTypes": false,
-    "rootDir": "../src/server"
+    "rootDir": ".."
   },
-  "include": ["../src/server/**/*"],
+  "include": [
+    "../src/server/**/*"
+  ],
   "exclude": [],
   "references": [
     {
       "path": "./tsconfig.shared.json"
     }
+  ],
+  "files": [
+    "../content/days/2026-11-24.json",
+    "../content/days/2026-12-01.json",
+    "../content/days/2026-12-02.json",
+    "../content/days/2026-12-03.json",
+    "../content/days/2026-12-04.json",
+    "../content/days/2026-12-05.json",
+    "../content/days/2026-12-06.json",
+    "../content/days/2026-12-07.json",
+    "../content/days/2026-12-08.json",
+    "../content/days/2026-12-09.json",
+    "../content/days/2026-12-10.json",
+    "../content/days/2026-12-11.json",
+    "../content/days/2026-12-12.json",
+    "../content/days/2026-12-13.json",
+    "../content/days/2026-12-14.json"
   ]
 }
