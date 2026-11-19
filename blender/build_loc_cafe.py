@@ -220,7 +220,7 @@ def build():
         cone(f"Herb{k}", 0.035, 0.008, 0.12, (x, -0.55, 1.28), "herb" if k % 2 else "herb_dry", rot=(math.pi, 0, 0), verts=7)
 
     # ---------------- arched rainy window on an indigo night (screen right, top) ----------------
-    wx, wz, ww = -0.33, 1.07, 0.18   # centre x, centre z of the straight part, half width
+    wx, wz, ww = -0.33, 0.98, 0.17   # centre x, centre z of the straight part, half width
     box("WinFrameL", (0.03, 0.06, 0.32), (wx - ww, -0.9, wz), "mahogany", bevel=0.004)
     box("WinFrameR", (0.03, 0.06, 0.32), (wx + ww, -0.9, wz), "mahogany", bevel=0.004)
     box("WinSill", (2 * ww + 0.08, 0.1, 0.025), (wx, -0.86, wz - 0.17), "mahogany", bevel=0.004)
@@ -240,7 +240,7 @@ def build():
         box(f"Rain{k}", (0.0025, 0.004, h), (wx + dx, -0.905, wz - 0.12 + (k * 0.137) % 0.34), "rain")
 
     # ---------------- chalkboard (repainted by Three.js), under the window ----------------
-    cx, cz = -0.33, 0.62
+    cx, cz = -0.33, 0.56
     box("ChalkFrame", (0.46, 0.04, 0.38), (cx, -0.91, cz), "chalk_frame", bevel=0.008)
     # normal toward the room (+Y); location.ts rotates the painted texture by 180°
     plane("CHALKBOARD", 0.41, 0.335, (cx, -0.885, cz), "chalkboard", rot=(-math.pi / 2, 0, 0))
@@ -413,6 +413,9 @@ def _proc_nodes(m, kind):
         brick.inputs["Color2"].default_value = dark
         brick.inputs["Mortar"].default_value = (0.32, 0.28, 0.25, 1)
         brick.inputs["Mortar Size"].default_value = 0.015
+        # Brick is a 2D (x, y) pattern: turn the coordinates so vertical walls get courses
+        # along X/Y-world and rows along Z (height), instead of long smeared stripes.
+        mapping.inputs["Rotation"].default_value = (math.pi / 2, 0, 0)
         L.new(mapping.outputs["Vector"], brick.inputs["Vector"])
         L.new(brick.outputs["Color"], bsdf.inputs["Base Color"])
         L.new(brick.outputs["Fac"], bump.inputs["Height"])
@@ -524,4 +527,5 @@ def bake_pbr():
         log(f"baked {mname}: {size}px albedo*AO{' + normal' if normal else ''} + roughness")
 
 
-build()
+if __name__ == "__main__":
+    build()

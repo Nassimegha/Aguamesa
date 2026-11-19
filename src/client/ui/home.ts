@@ -20,7 +20,13 @@ export function showHome(player: PlayerState, actions: HomeActions): Screen {
       <div class="home__top"></div>
       <div class="home__title">Aguamesa</div>
       <div class="home__tagline">A midnight café. One glass at a time.</div>
-      <button class="btn btn--primary home__servir" data-servir>Start Tonight's Shift</button>
+      <button class="btn btn--primary home__servir" data-servir>${
+        player.playedToday.length > 0 && player.playedToday.every(Boolean)
+          ? "See Tonight's Results"
+          : player.playedToday.some(Boolean)
+            ? "Finish Tonight's Shift"
+            : "Start Tonight's Shift"
+      }</button>
       <button class="btn home__levels" data-levels>⭐ Levels</button>
       <div class="home__row">
         <button class="btn home__secondary" data-carte>🗺️ Map</button>

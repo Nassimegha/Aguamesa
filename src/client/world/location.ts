@@ -122,15 +122,25 @@ export async function loadLocation(game: GameScene, location: LocationId): Promi
   renderer.toneMappingExposure = 1.15;
   const mood = new THREE.Group();
   mood.name = 'location_lights';
+  // Chaque lieu a sa couleur de nuit : café ambré, taverne pirate à la lanterne, château
+  // froid et verdâtre, fête foraine plus vive.
+  const MOODS: Partial<Record<LocationId, { warm: number; warmI: number; moon: number; moonI: number; exposure: number }>> = {
+    cafe: { warm: 0xffa24a, warmI: 1.6, moon: 0x8ea6ff, moonI: 0.9, exposure: 1.15 },
+    pirate: { warm: 0xffb054, warmI: 1.5, moon: 0x7fa8d8, moonI: 0.8, exposure: 1.1 },
+    castle: { warm: 0xffc58a, warmI: 0.9, moon: 0x9dffc4, moonI: 1.4, exposure: 1.05 },
+    fair: { warm: 0xffd08a, warmI: 1.9, moon: 0xb4a6ff, moonI: 0.7, exposure: 1.2 },
+  };
+  const m = MOODS[location] ?? MOODS.cafe!;
+  renderer.toneMappingExposure = m.exposure;
   for (const x of [-0.6, -0.2, 0.2, 0.6]) {
-    const bulb = new THREE.PointLight(0xffa24a, 1.6, 2.6, 2);
+    const bulb = new THREE.PointLight(m.warm, m.warmI, 2.6, 2);
     bulb.position.set(x, 1.22, 0.3);
     mood.add(bulb);
   }
-  const key = new THREE.PointLight(0xffb766, 1.4, 2.2, 2); // chaleur sur le comptoir et le verre
+  const key = new THREE.PointLight(m.warm, 1.4, 2.2, 2); // chaleur sur le comptoir et le verre
   key.position.set(-0.15, 0.55, -0.15);
   mood.add(key);
-  const moon = new THREE.DirectionalLight(0x8ea6ff, 0.9); // liseré froid depuis la fenêtre
+  const moon = new THREE.DirectionalLight(m.moon, m.moonI); // liseré froid depuis la fenêtre
   moon.position.set(-0.33, 1.15, 0.95);
   moon.target.position.set(0.1, 0.1, 0);
   mood.add(moon, moon.target);

@@ -723,8 +723,15 @@ export async function loadMap(
       w.halo.material.opacity = 0.35 * p.stars;
     }
   }
-  applyPreset(cur);
+  // Le choix Jour/Nuit est retenu (préférence locale du joueur, facultative).
   let night = false;
+  try {
+    night = localStorage.getItem('aguamesa.mapNight') === '1';
+  } catch {
+    /* stockage bloqué : on reste en Jour */
+  }
+  if (night) mix(DAY, NIGHT, 1);
+  applyPreset(cur);
   let tod: { from: Preset; to: Preset; t: number } | null = null;
   const todBtn = document.createElement('button');
   todBtn.className = 'tod-toggle';
@@ -737,6 +744,11 @@ export async function loadMap(
   todBtn.addEventListener('click', () => {
     night = !night;
     renderTod();
+    try {
+      localStorage.setItem('aguamesa.mapNight', night ? '1' : '0');
+    } catch {
+      /* rien : la préférence ne sera simplement pas retenue */
+    }
     const snap: Preset = {
       ...cur,
       sunDir: cur.sunDir.clone(), sun: cur.sun.clone(), hemiSky: cur.hemiSky.clone(), hemiGround: cur.hemiGround.clone(),

@@ -6,7 +6,8 @@
 // officiel de la nuit reste NightSummary.tips. En mode Niveaux il n'y a pas de pourboires.
 
 export interface Hud {
-  setGlass(index: number, count: number): void;
+  /** presses > 1 for layered drinks (layers2 / layers3): one press per line. */
+  setGlass(index: number, count: number, presses?: number): void;
   showPour(score: number, overflow: boolean): void;
   showServer(info: { beatPercent: number; crowdLine: number; level: number }): void;
   dispose(): void;
@@ -46,16 +47,29 @@ export function createHud(label: string, goal?: string, streak = 0, showTips = t
   let hideTimer = 0;
   let sum = 0;
 
-  function setGlass(index: number, count: number): void {
+  function setGlass(index: number, count: number, presses = 1): void {
     glassEl.textContent = `Glass ${index + 1}/${count}`;
-    pop.classList.remove('hud-pop--in');
+    if (presses > 1) {
+      hint.textContent = `Layered drink · ${presses} pours, one per line`;
+      hint.classList.add('hud__hint--twist');
+      hint.style.opacity = '1';
+    } else if (index === 0) {
+      hint.textContent = 'Hold to pour · release on the line';
+      hint.classList.remove('hud__hint--twist');
+      hint.style.opacity = '1';
+    } else {
+      hint.style.opacity = '0';
+    }
   }
 
   function showPour(score: number, overflow: boolean): void {
     hint.style.opacity = '0';
     const v = verdict(score, overflow);
-    const tip = tipFor(score, streak);
+    // Pourboires cumulés arrondis comme le serveur (round(total × taux)), puis la part de ce
+    // verre = différence : la somme affichée tombe exactement sur NightSummary.tips.
+    const before = tipFor(sum, streak);
     sum += score;
+    const tip = tipFor(sum, streak) - before;
     pop.className = `hud-pop ${v.cls}`;
     const tipText = showTips ? `${tip > 0 ? `+${tip} 💰 tips` : 'no tip'} · ` : '';
     pop.innerHTML = `<b class="hud-pop__score">${score}</b><span class="hud-pop__verdict">${v.text}</span>

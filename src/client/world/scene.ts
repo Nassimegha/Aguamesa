@@ -41,6 +41,8 @@ export function createScene(canvas: HTMLCanvasElement): GameScene {
   scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
   pmrem.dispose();
 
+  // Un .glb déjà téléchargé (client qui revient, verre préchargé) ne repasse pas par le réseau.
+  THREE.Cache.enabled = true;
   const loader = new GLTFLoader();
   loader.setMeshoptDecoder(MeshoptDecoder);
 
@@ -81,10 +83,37 @@ export function createScene(canvas: HTMLCanvasElement): GameScene {
     return () => listeners.delete(listener);
   }
 
+  // Qualité adaptative : si un téléphone n'arrive pas à tenir ~50 FPS, on baisse la
+  // résolution de rendu par paliers (2 → 1,5 → 1,25 → 1). Jamais l'inverse en cours de
+  // partie, pour ne pas faire « pomper » l'image.
+  const DPR_STEPS = [2, 1.5, 1.25, 1];
+  let dprStep = DPR_STEPS.findIndex((d) => d <= Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO));
+  if (dprStep < 0) dprStep = DPR_STEPS.length - 1;
+  let slowTime = 0;
+  let sampleTime = 0;
+  let sampleFrames = 0;
+  function adaptQuality(dt: number): void {
+    if (dt > 0.5 || document.hidden) return; // onglet en pause : on ne mesure pas
+    sampleTime += dt;
+    sampleFrames++;
+    if (sampleTime < 1) return;
+    const fps = sampleFrames / sampleTime;
+    sampleTime = 0;
+    sampleFrames = 0;
+    slowTime = fps < 48 ? slowTime + 1 : 0;
+    if (slowTime >= 2 && dprStep < DPR_STEPS.length - 1) {
+      dprStep++;
+      slowTime = 0;
+      renderer.setPixelRatio(DPR_STEPS[dprStep]!);
+      resize();
+    }
+  }
+
   function start(onFrame?: FrameListener): void {
     function tick(now: number): void {
       const deltaSeconds = (now - lastTime) / 1000;
       lastTime = now;
+      adaptQuality(deltaSeconds);
       onFrame?.(deltaSeconds);
       for (const listener of listeners) listener(deltaSeconds);
       renderer.render(scene, camera);

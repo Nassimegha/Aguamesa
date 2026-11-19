@@ -30,7 +30,7 @@ const gameApi: GameApi = isLocal ? mockApi : api;
 const KNOWN_CUSTOMERS: ReadonlySet<CustomerId> = new Set([
   'giant', 'fairy', 'ghost', 'surfer', 'crab_mister', 'mermaid', 'yeti', 'skier', 'grandma_bear', 'pirate', 'wizard',
 ]);
-const KNOWN_LOCATIONS: ReadonlySet<string> = new Set(['cafe', 'beach', 'chalet']);
+const KNOWN_LOCATIONS: ReadonlySet<string> = new Set(['cafe', 'beach', 'chalet', 'fair', 'pirate', 'castle']);
 
 // Où se tient chaque client : derrière le comptoir, de côté pour ne pas cacher le verre.
 // Les grands sont plus bas (debout derrière le bar), les petits posés sur le comptoir.
@@ -108,13 +108,28 @@ interface CafeSession {
   close(): void;
 }
 
+/**
+ * Télécharge à l'avance les .glb des clients et des verres de la session (THREE.Cache les
+ * garde) : quand le client suivant arrive, il apparaît tout de suite, sans saccade.
+ */
+const fileLoader = new THREE.FileLoader().setResponseType('arraybuffer');
+function preload(glasses: readonly GlassSpec[]): void {
+  const urls = new Set<string>();
+  for (const g of glasses) {
+    if (KNOWN_CUSTOMERS.has(g.customer as CustomerId)) urls.add(`/assets/models/char_${g.customer}.glb`);
+    urls.add(`/assets/models/glass_${g.model}.glb`);
+  }
+  for (const u of urls) fileLoader.load(u, undefined, undefined, () => {});
+}
+
 async function openCafe(
   location: string,
   hudLabel: string,
   glassCount: number,
-  options: { goal?: string; chalkNight: number; specials?: string[]; tips: boolean },
+  options: { goal?: string; chalkNight: number; specials?: string[]; tips: boolean; glasses: readonly GlassSpec[] },
 ): Promise<CafeSession> {
-  const locationId = KNOWN_LOCATIONS.has(location) ? (location as 'cafe' | 'beach' | 'chalet') : 'cafe';
+  preload(options.glasses);
+  const locationId = KNOWN_LOCATIONS.has(location) ? (location as LocationId) : 'cafe';
   if (locationId !== location) console.warn(`[aguamesa] location "${location}" not built yet, using cafe`);
   const streak = player?.streak ?? 0;
 
@@ -142,17 +157,32 @@ async function openCafe(
     bubble.textContent = text;
     bubbleUntil = clock + seconds;
   };
+  // La bulle suit le haut de la tête du client (boîte englobante), qu'il soit grand
+  // (géant, debout derrière le bar) ou minuscule (fée posée sur le comptoir).
+  const box = new THREE.Box3();
+  const head = new THREE.Vector3();
+  let bx = -1;
+  let by = -1;
   const stopBubble = game.onTick((dt) => {
     clock += dt;
-    const a = loc.dialogueAnchor;
-    const show = !!a && clock < bubbleUntil;
+    const show = clock < bubbleUntil;
     bubble.classList.toggle('speech-bubble--on', show);
-    if (!a || !show) return;
-    const p = a.getWorldPosition(new THREE.Vector3()).project(game.camera);
+    if (!show) return;
+    if (activeCustomer) {
+      box.setFromObject(activeCustomer.root);
+      head.set((box.min.x + box.max.x) / 2, box.max.y + 0.03, (box.min.z + box.max.z) / 2);
+    } else if (loc.dialogueAnchor) {
+      loc.dialogueAnchor.getWorldPosition(head);
+    } else return;
+    const p = head.project(game.camera);
     const r = canvas.getBoundingClientRect();
-    const x = THREE.MathUtils.clamp(r.left + (p.x * 0.5 + 0.5) * r.width, 110, innerWidth - 110);
-    const y = THREE.MathUtils.clamp(r.top + (-p.y * 0.5 + 0.5) * r.height, 130, innerHeight * 0.45);
-    bubble.style.transform = `translate(${x}px, ${y}px) translate(-50%, -100%)`;
+    const w = bubble.offsetWidth / 2 + 12;
+    const x = THREE.MathUtils.clamp(r.left + (p.x * 0.5 + 0.5) * r.width, w, innerWidth - w);
+    const y = THREE.MathUtils.clamp(r.top + (-p.y * 0.5 + 0.5) * r.height, 120, innerHeight * 0.62);
+    // lissage : la bulle ne saute pas quand le client s'anime
+    bx = bx < 0 ? x : bx + (x - bx) * Math.min(1, dt * 10);
+    by = by < 0 ? y : by + (y - by) * Math.min(1, dt * 10);
+    bubble.style.transform = `translate(${bx}px, ${by}px) translate(-50%, -100%)`;
   });
 
   let firstGreeting = true;
@@ -166,7 +196,7 @@ async function openCafe(
     stage,
     hud,
     onGlassStart(index, spec) {
-      hud.setGlass(index, glassCount);
+      hud.setGlass(index, glassCount, spec.twist === 'layers3' ? 3 : spec.twist === 'layers2' ? 2 : 1);
       const token = ++customerToken;
       activeCustomer?.dispose();
       activeCustomer = null;
@@ -215,6 +245,7 @@ async function playTonight(today: DailyService, visitLocation?: string): Promise
     chalkNight: today.night,
     specials: [today.drinkOfTheDay ?? 'Moonlight Latte', 'Giant Mug Stout', 'Fairy Fizz', 'Ghost Chai'],
     tips: true,
+    glasses: today.glasses,
   });
   await playNight({
     today,
@@ -298,6 +329,7 @@ async function playLevelById(id: string): Promise<void> {
     goal: `★ ${level.stars[0]}`,
     chalkNight: player ? Math.max(1, player.serverLevel) : 1,
     tips: false,
+    glasses: level.glasses,
   });
   const before = bestStars(id);
   const result = await playLevel({
