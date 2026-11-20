@@ -87,7 +87,8 @@ node check_nodes.mjs ../assets/models/loc_cafe.glb
 ```bash
 cd blender
 "C:\Program Files\Blender Foundation\Blender 5.2\blender.exe" --background --python build_customers.py   # AGUAMESA_ONLY=id1,id2 pour en refaire quelques-uns
-# puis compresser tout blender/_chars/*_raw.glb (weld + meshopt) vers ../assets/models/char_<id>.glb
+node compress_models.mjs _chars   # weld + meshopt de tous les clients -> ../assets/models/char_<id>.glb
+# (pour les lieux : node compress_models.mjs .  après build_loc_cafe.py / build_loc_themed.py)
 node check_animations.mjs ../assets/models/char_giant.glb
 # planche de contrôle visuel des 30 clients d'un lieu :
 "C:\Program Files\Blender Foundation\Blender 5.2\blender.exe" --background --python preview_customers.py -- cafe planche_cafe.png

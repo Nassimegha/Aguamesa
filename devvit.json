@@ -1,6 +1,6 @@
 {
   "$schema": "https://developers.reddit.com/schema/config-file.v1.json",
-  "name": "aguamesa0test",
+  "name": "aguamesa",
   "permissions": {
     "redis": true,
     "reddit": {
@@ -74,6 +74,6 @@
     "dev": "vite build --watch"
   },
   "dev": {
-    "subreddit": "aguamesa_test_nassime"
+    "subreddit": "aguamesa_dev"
   }
 }
