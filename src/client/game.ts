@@ -29,6 +29,7 @@ import { playLevel } from './game/levelPlayer';
 import { levelIds, loadLevel } from './game/levels';
 import { createGameAudio } from './game/audio';
 import type { DailyService, GlassSpec, Level, PlayerState } from '../shared/types';
+import { REAL_SHIFT_LOCATION } from '../shared/guests.ts';
 
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 const gameApi: GameApi = isLocal ? mockApi : api;
@@ -40,9 +41,9 @@ const isLocation = (v: string | null | undefined): v is LocationId => !!v && (LO
  * Lieu 6 de la carte : la VRAIE nuit (Tonight's Shift), celle des joueurs Reddit — 1 essai par
  * nuit, score recalculé par le serveur, série 🔥, classement, partage.
  * Lieux 1 à 5 : Free Play — parties illimitées (équipe, jury, entraînement), mêmes règles et
- * même formule de score, sans rien envoyer au serveur. Changer de lieu « réel » = cette ligne.
+ * même formule de score, sans rien envoyer au serveur. Le lieu « réel » vit dans
+ * shared/guests.ts : le serveur s'en sert pour les emojis du shareText.
  */
-const REAL_SHIFT_LOCATION: LocationId = 'castle';
 const isRealShift = (l: LocationId): boolean => l === REAL_SHIFT_LOCATION;
 
 /** Names, one-line pitch (Visit mode) and the drinks on each location's chalkboard. */
