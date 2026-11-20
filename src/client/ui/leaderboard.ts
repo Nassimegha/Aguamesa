@@ -1,7 +1,7 @@
 // P2 (Nassime) : écran de classement (brief 02 Tâche 5).
 // Du jour et de tous les temps (contrat 00 §6.2 : GET /api/leaderboard?scope=).
 import { mountScreen, header, bindBack, type Screen } from './screen';
-import type { LeaderboardRow } from './contractTypesTemp';
+import type { LeaderboardRow } from '../../shared/types';
 
 export interface LeaderboardData {
   day: LeaderboardRow[];
