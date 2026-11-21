@@ -5,7 +5,7 @@
 //   - Free Play : la carte, lieux 1 à 5, parties illimitées pour s'entraîner et tout découvrir.
 import { mountScreen, type Screen } from './screen';
 import { createStreakWidget } from './streak';
-import type { PlayerState } from './contractTypesTemp';
+import type { PlayerState } from '../../shared/types';
 
 export interface HomeActions {
   onServir(): void;

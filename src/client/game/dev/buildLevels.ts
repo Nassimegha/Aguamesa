@@ -7,6 +7,7 @@
 // it never invents the level layout, it only tunes the speed and the star thresholds.
 
 /// <reference types="node" />
+/* global process: readonly */
 
 import { writeFileSync } from 'node:fs';
 import type { GlassModel, GlassSpec, Level, LocationId, Twist } from '../../../shared/types';

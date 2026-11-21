@@ -23,6 +23,7 @@ import { showLevelSelect, showLevelResult, type LevelCard } from './ui/levels';
 import { showVisitPanel } from './ui/visit';
 import { createHud, tipFor, type Hud } from './ui/hud';
 import type { Screen } from './ui/screen';
+import { showLoadError } from './ui/error';
 import { createGlassStage, type GlassStage } from './game/glassStage';
 import { playNight, playRound } from './game/round';
 import { playLevel } from './game/levelPlayer';
@@ -84,6 +85,48 @@ async function fadeOut(): Promise<void> {
 }
 function fadeIn(): void {
   fade.classList.remove('scene-fade--on');
+}
+
+/**
+ * A 3D load failed (island, location, model): never leave the user on a black
+ * screen. The fade sits above every screen (z-index), so clear it first, then
+ * show a message with a way back home.
+ */
+function showFatalLoadError(
+  title: string,
+  err: unknown,
+  options: { retry?: () => void | Promise<void>; map?: boolean } = {},
+): void {
+  console.error(`[aguamesa] ${title}:`, err);
+  fadeIn();
+  closeScreen();
+  const retry = options.retry;
+  const message = err instanceof Error && err.message ? err.message : String(err);
+  activeScreen = showLoadError(title, message, {
+    onHome: () => {
+      closeScreen();
+      boot().catch((bootErr: unknown) => console.error('[aguamesa] boot:', bootErr));
+    },
+    ...(retry
+      ? {
+          onRetry: () => {
+            closeScreen();
+            // A retry that fails shows the error again instead of black-screening.
+            void Promise.resolve()
+              .then(() => retry())
+              .catch((retryErr: unknown) => showFatalLoadError(title, retryErr, options));
+          },
+        }
+      : {}),
+    ...(options.map
+      ? {
+          onMap: () => {
+            closeScreen();
+            openMap();
+          },
+        }
+      : {}),
+  });
 }
 
 /** Cadrage portrait : comptoir en bas, verre au centre, client derrière, bien visible. */
@@ -219,7 +262,15 @@ async function openCafe(
   preload([...guests.map((c) => `/assets/models/char_${c.id}.glb`), ...glasses.map((g) => `/assets/models/glass_${g.model}.glb`)]);
   const streak = player?.streak ?? 0;
 
-  const loc = await loadLocation(game, location);
+  let loc: LoadedLocation;
+  try {
+    loc = await loadLocation(game, location);
+  } catch (err: unknown) {
+    // Callers only log: surface the failure here, or the user is stuck on a
+    // black canvas (or behind the fade) with no way back.
+    showFatalLoadError(`${LOCATION_INFO[location].name} didn't load`, err, { map: true });
+    throw err;
+  }
   frameGameplayCamera();
   fadeIn();
   const sound = createGameAudio();
@@ -470,7 +521,16 @@ async function visitLocation(id: LocationId): Promise<void> {
   closeScreen();
   const info = LOCATION_INFO[id];
   const cast = rosterFor(id);
-  const loc = await loadLocation(game, id);
+  let loc: LoadedLocation;
+  try {
+    loc = await loadLocation(game, id);
+  } catch (err: unknown) {
+    showFatalLoadError(`${info.name} didn't load`, err, {
+      retry: () => visitLocation(id),
+      map: true,
+    });
+    return;
+  }
   frameGameplayCamera();
   fadeIn();
   loc.setChalkboard({ night: today?.night ?? 1, streak: player?.streak ?? 0, specials: info.specials });
@@ -569,10 +629,20 @@ function openMap(): void {
   let backBtn: HTMLButtonElement | null = null;
   let mapRef: { dispose(): void } | null = null;
   const enter = async (id: LocationId): Promise<void> => {
-    await fadeOut();
-    mapRef?.dispose();
-    backBtn?.remove();
-    await visitLocation(id);
+    try {
+      await fadeOut();
+      mapRef?.dispose();
+      backBtn?.remove();
+      await visitLocation(id);
+    } catch (err: unknown) {
+      // visitLocation already shows its own UI for load failures and returns;
+      // this is the backstop for anything unexpected, so Enter can never trap
+      // the user behind the fade with no way back.
+      showFatalLoadError(`${LOCATION_INFO[id].name} didn't load`, err, {
+        retry: () => enter(id),
+        map: true,
+      });
+    }
   };
   const tags = Object.fromEntries(
     LOCATIONS.map((l) => [l, isRealShift(l) ? { label: "🔥 Tonight's Shift", real: true } : { label: 'Free play' }]),
@@ -597,6 +667,8 @@ function openMap(): void {
       void boot();
     });
     document.body.appendChild(backBtn);
+  }).catch((err: unknown) => {
+    showFatalLoadError("The island didn't load", err, { retry: () => openMap() });
   });
 }
 
@@ -619,7 +691,14 @@ async function boot(): Promise<void> {
     firstBoot = false;
     const direct = new URLSearchParams(window.location.search).get('visit');
     if (isLocation(direct)) {
-      await visitLocation(direct);
+      try {
+        await visitLocation(direct);
+      } catch (err: unknown) {
+        showFatalLoadError(`${LOCATION_INFO[direct].name} didn't load`, err, {
+          retry: () => visitLocation(direct),
+          map: true,
+        });
+      }
       return;
     }
   }
