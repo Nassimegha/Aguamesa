@@ -38,13 +38,12 @@ const LOCATIONS: readonly LocationId[] = ['cafe', 'beach', 'chalet', 'fair', 'pi
 const isLocation = (v: string | null | undefined): v is LocationId => !!v && (LOCATIONS as readonly string[]).includes(v);
 
 /**
- * Lieu 6 de la carte : la VRAIE nuit (Tonight's Shift), celle des joueurs Reddit — 1 essai par
- * nuit, score recalculé par le serveur, série 🔥, classement, partage.
- * Lieux 1 à 5 : Free Play — parties illimitées (équipe, jury, entraînement), mêmes règles et
- * même formule de score, sans rien envoyer au serveur. Changer de lieu « réel » = cette ligne.
+ * Tonight's Shift — la VRAIE nuit des joueurs Reddit (1 essai par nuit, score recalculé par le
+ * serveur, série 🔥, classement, partage) — se joue là où le serveur le dit : night.location
+ * tourne sur les 6 lieux. Les autres lieux sont en Free Play (parties illimitées pour l'équipe,
+ * le jury et l'entraînement : mêmes règles et même formule de score, sans rien envoyer au
+ * serveur). isRealShift() (voir `today` ci-dessous) compare au night.location du jour.
  */
-const REAL_SHIFT_LOCATION: LocationId = 'castle';
-const isRealShift = (l: LocationId): boolean => l === REAL_SHIFT_LOCATION;
 
 /** Names, one-line pitch (Visit mode) and the drinks on each location's chalkboard. */
 const LOCATION_INFO: Record<LocationId, { name: string; blurb: string; specials: string[] }> = {
@@ -69,6 +68,8 @@ game.start();
 let activeScreen: Screen | null = null;
 let player: PlayerState | null = null;
 let today: DailyService | null = null;
+/** True for the location Tonight's Shift plays at — the server's night.location for today. */
+const isRealShift = (l: LocationId): boolean => today?.location === l;
 function closeScreen(): void {
   activeScreen?.unmount();
   activeScreen = null;
@@ -308,10 +309,11 @@ async function openCafe(
 }
 
 // ---------------------------------------------------------------------------
-// Service du Jour : la vraie nuit, toujours au lieu 6 (REAL_SHIFT_LOCATION).
+// Service du Jour : la vraie nuit, au lieu décidé par le serveur (night.location), avec les
+// clients de ce lieu-là (tirage fixé par la date, les mêmes pour tout le monde).
 // ---------------------------------------------------------------------------
 async function playTonight(night: DailyService): Promise<void> {
-  const location = REAL_SHIFT_LOCATION;
+  const location = night.location;
   const s = await openCafe(location, `Night #${night.night}`, night.glasses, {
     chalkNight: night.night,
     tips: true,
@@ -392,7 +394,7 @@ async function playFreePlay(location: LocationId): Promise<void> {
   const streak = player?.streak ?? 0;
   closeScreen();
   activeScreen = showPracticeResult(
-    { place: info.name, scores, total, tips: tipFor(total, streak), streak, realPlace: LOCATION_INFO[REAL_SHIFT_LOCATION].name },
+    { place: info.name, scores, total, tips: tipFor(total, streak), streak, realPlace: LOCATION_INFO[today?.location ?? 'cafe'].name },
     {
       onReplay: () => {
         closeScreen();
@@ -582,7 +584,7 @@ async function visitLocation(id: LocationId): Promise<void> {
       shiftNote: real
         ? 'The real game: 1 try per night, scored by the server, grows your 🔥 streak and counts for the leaderboard.'
         : `Unlimited replays, same rules. Doesn't change your 🔥 streak or the leaderboard (that's Tonight's Shift at the ${
-            LOCATION_INFO[REAL_SHIFT_LOCATION].name
+            LOCATION_INFO[today?.location ?? 'cafe'].name
           }).`,
     },
     {
@@ -726,7 +728,7 @@ async function boot(): Promise<void> {
       closeScreen();
       activeScreen = showShelf(me.collection, { onClose: () => void boot() });
     },
-  }, { shiftPlace: LOCATION_INFO[REAL_SHIFT_LOCATION].name });
+  }, { shiftPlace: LOCATION_INFO[night.location].name });
 }
 
 boot().catch((err: unknown) => console.error('[aguamesa] boot:', err));

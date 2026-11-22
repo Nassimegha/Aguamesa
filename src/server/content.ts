@@ -9,6 +9,8 @@
 // Shape validation (validateDailyService) is what the Task 5 acceptance
 // criterion runs against: every content/days/*.json must pass it.
 import type { DailyService, GlassModel, GlassSpec, LocationId, Twist } from '../shared/types';
+import { isDayId } from './dates';
+import { fallbackDay } from './fallback';
 import day20261124 from '../../content/days/2026-11-24.json' with { type: 'json' };
 import day20261201 from '../../content/days/2026-12-01.json' with { type: 'json' };
 import day20261202 from '../../content/days/2026-12-02.json' with { type: 'json' };
@@ -175,7 +177,10 @@ export function latestDay(): DailyService {
 
 /**
  * Which day a request plays. Scheduler posts (Task 3) pin their dayId in
- * postData; anything else (old posts, local dev) gets the latest day.
+ * postData: an authored day wins, otherwise the post plays the SAME seeded
+ * fallback night publishing used for that dayId (fallback.ts) — never the
+ * latest day. Anything without a real dayId (old posts, local dev, junk)
+ * gets the latest day.
  */
 export function resolvePostDay(postData: unknown): DailyService {
   if (isRecord(postData)) {
@@ -183,6 +188,7 @@ export function resolvePostDay(postData: unknown): DailyService {
     if (typeof dayId === 'string') {
       const day = getDay(dayId);
       if (day !== undefined) return day;
+      if (isDayId(dayId)) return fallbackDay(dayId);
     }
   }
   return latestDay();
