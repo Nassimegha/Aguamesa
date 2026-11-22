@@ -5,7 +5,8 @@ import { describe, test } from 'node:test';
 import { strict as assert } from 'node:assert';
 import { checkSpecialCompliance } from './calendar';
 import { allDays, getDay, latestDay, resolvePostDay, validateDailyService } from './content';
-import { fallbackDay } from './fallback';
+import { todayDayId } from './dates';
+import { fallbackDay, fallbackNight } from './fallback';
 
 const SEED_GLASSES = [
   { model: 'mug_giant', line: 0.78, flow: 1.0, twist: 'none', customer: 'giant' },
@@ -29,17 +30,41 @@ describe('content', () => {
     assert.deepEqual(JSON.parse(JSON.stringify(day)), SEED_DAY);
   });
 
-  test('resolvePostDay prefers the post dayId (authored, else fallback), else the latest day', () => {
+  test('resolvePostDay prefers the post dayId (authored, else fallback), else today', () => {
     assert.equal(resolvePostDay({ dayId: '2026-11-24' }).dayId, '2026-11-24');
     // Missing days play their own seeded night — the same one publishing used.
     assert.deepEqual(resolvePostDay({ dayId: '2026-11-23' }), fallbackDay('2026-11-23'));
     assert.deepEqual(resolvePostDay({ dayId: '2999-01-01' }), fallbackDay('2999-01-01'));
     assert.notEqual(resolvePostDay({ dayId: '2026-11-23' }).dayId, latestDay().dayId);
-    // No (or no real) dayId: latest day, as before.
-    assert.equal(resolvePostDay(undefined).dayId, latestDay().dayId);
-    assert.equal(resolvePostDay({}).dayId, latestDay().dayId);
-    assert.equal(resolvePostDay({ dayId: 'tomorrow' }).dayId, latestDay().dayId);
-    assert.equal(resolvePostDay({ dayId: '2026-02-30' }).dayId, latestDay().dayId);
+    // No (or no real) dayId: today's seeded night, never the latest day.
+    const today = todayDayId();
+    assert.deepEqual(resolvePostDay(undefined), fallbackDay(today));
+    assert.deepEqual(resolvePostDay({}), fallbackDay(today));
+    assert.deepEqual(resolvePostDay({ dayId: 'tomorrow' }), fallbackDay(today));
+    assert.deepEqual(resolvePostDay({ dayId: '2026-02-30' }), fallbackDay(today));
+  });
+
+  test('a post with no valid dayId plays today, not the latest authored day', () => {
+    const today = todayDayId();
+    for (const postData of [undefined, {}, { dayId: 'tomorrow' }, { dayId: '2026-02-30' }]) {
+      const day = resolvePostDay(postData);
+      assert.equal(day.dayId, today);
+      assert.equal(day.night, fallbackNight(today));
+      assert.deepEqual(day, fallbackDay(today));
+    }
+  });
+
+  test('a valid unknown date plays its own night, not the latest day', () => {
+    const day = resolvePostDay({ dayId: '2026-11-23' });
+    assert.equal(day.dayId, '2026-11-23');
+    assert.equal(day.night, fallbackNight('2026-11-23'));
+    assert.notEqual(day.dayId, latestDay().dayId);
+  });
+
+  test('an authored date still returns the authored day', () => {
+    const authored = getDay('2026-11-24');
+    assert.ok(authored !== undefined);
+    assert.deepEqual(resolvePostDay({ dayId: '2026-11-24' }), authored);
   });
 
   test('an authored day wins over the fallback for the same date', () => {
