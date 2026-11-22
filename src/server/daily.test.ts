@@ -1,15 +1,11 @@
 // src/server/daily.test.ts — P3 (Task 3)
 import { describe, test } from 'node:test';
 import { strict as assert } from 'node:assert';
-import { validateDailyService } from './content';
-import {
-  fallbackDay,
-  fallbackNight,
-  nightPostTitle,
-  publishNight,
-  resolveDayForPost,
-  type NightPoster,
-} from './daily';
+import { CUSTOMER_ROSTER } from '../shared/customerRoster';
+import { checkSpecialCompliance } from './calendar';
+import { resolvePostDay, validateDailyService } from './content';
+import { nightPostTitle, publishNight, resolveDayForPost, type NightPoster } from './daily';
+import { fallbackDay, fallbackNight } from './fallback';
 import { MemoryStore } from './memoryStore';
 
 function fakePoster(fail = false): NightPoster & { calls: () => number } {
@@ -39,13 +35,42 @@ describe('daily', () => {
   });
 
   test('fallback nights are deterministic per dayId and numbered from night 24', () => {
+    assert.deepEqual(fallbackDay('2026-11-23'), fallbackDay('2026-11-23'));
     assert.deepEqual(fallbackDay('2026-12-15'), fallbackDay('2026-12-15'));
+    assert.equal(fallbackNight('2026-11-23'), 23);
     assert.equal(fallbackNight('2026-11-24'), 24);
     assert.equal(fallbackNight('2026-11-25'), 25);
     assert.equal(fallbackNight('not-a-day'), 1);
     assert.ok(
+      JSON.stringify(fallbackDay('2026-11-23')) !== JSON.stringify(fallbackDay('2026-11-24'))
+    );
+    assert.ok(
       JSON.stringify(fallbackDay('2026-12-15')) !== JSON.stringify(fallbackDay('2026-12-16'))
     );
+  });
+
+  test('fallback night deals the location first, then that location roster guests', () => {
+    const day = fallbackDay('2026-11-23');
+    assert.equal(day.dayId, '2026-11-23');
+    assert.equal(day.night, 23);
+    assert.ok(['cafe', 'beach', 'chalet', 'fair', 'pirate', 'castle'].includes(day.location));
+    assert.equal(day.glasses.length, 5);
+    assert.equal(day.drinkOfTheDay, undefined);
+    const rosterIds = new Set(
+      CUSTOMER_ROSTER.filter((c) => c.location === day.location).map((c) => c.id)
+    );
+    assert.equal(rosterIds.size, 30);
+    const seen = new Set<string>();
+    for (const glass of day.glasses) {
+      assert.ok(rosterIds.has(glass.customer), `guest ${glass.customer} is not from ${day.location}`);
+      assert.ok(!seen.has(glass.customer), `duplicate guest ${glass.customer}`);
+      seen.add(glass.customer);
+      assert.ok(glass.line >= 0.6 && glass.line <= 0.85, `line ${glass.line} out of range`);
+      assert.ok(glass.flow >= 0.7 && glass.flow <= 1.3, `flow ${glass.flow} out of range`);
+      assert.ok(['none', 'foam', 'steam', 'ice'].includes(glass.twist));
+    }
+    assert.ok(validateDailyService(day) !== undefined);
+    assert.deepEqual(checkSpecialCompliance(day), []);
   });
 
   test('fallback honors the week calendar (blind, rush, boss)', () => {
@@ -55,6 +80,8 @@ describe('daily', () => {
     const saturday = fallbackDay('2026-12-19');
     assert.equal(saturday.special, 'saturday_rush');
     assert.equal(saturday.glasses.length, 7);
+    const rushGuests = saturday.glasses.map((g) => g.customer);
+    assert.equal(new Set(rushGuests).size, 7);
     const sunday = fallbackDay('2026-12-20');
     assert.equal(sunday.special, 'sunday_boss');
     assert.equal(sunday.glasses.length, 5);
@@ -62,6 +89,20 @@ describe('daily', () => {
     const monday = fallbackDay('2026-12-21');
     assert.equal(monday.special, undefined);
     assert.equal(monday.glasses.length, 5);
+    for (const day of [friday, saturday, sunday, monday]) {
+      assert.equal(day.drinkOfTheDay, undefined);
+      assert.ok(validateDailyService(day) !== undefined);
+      assert.deepEqual(checkSpecialCompliance(day), []);
+    }
+  });
+
+  test('publishing and playing agree: authored or fallback, same night', () => {
+    for (const dayId of ['2026-11-23', '2026-11-25', '2026-11-24']) {
+      const { day } = resolveDayForPost(dayId);
+      assert.deepEqual(resolvePostDay({ dayId }), day, dayId);
+    }
+    assert.equal(resolveDayForPost('2026-11-23').fromFallback, true);
+    assert.equal(resolveDayForPost('2026-11-24').fromFallback, false);
   });
 
   test('publishNight carries yesterday mod-picked drink into the new day', async () => {

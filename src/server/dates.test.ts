@@ -1,7 +1,7 @@
 // src/server/dates.test.ts — P3 (Task 3)
 import { describe, test } from 'node:test';
 import { strict as assert } from 'node:assert';
-import { addDays, diffDays, toDayId, todayDayId } from './dates';
+import { addDays, diffDays, isDayId, toDayId, todayDayId } from './dates';
 
 describe('dates', () => {
   test('todayDayId honors the given clock (UTC)', () => {
@@ -29,5 +29,14 @@ describe('dates', () => {
     assert.equal(addDays('tomorrow', 1), undefined);
     assert.equal(diffDays('2026-13-01', '2026-11-24'), undefined);
     assert.equal(diffDays('2026-11-24', '2026-11-32'), undefined);
+  });
+
+  test('isDayId accepts real calendar dates only', () => {
+    assert.equal(isDayId('2026-11-23'), true);
+    assert.equal(isDayId('2028-02-29'), true);
+    assert.equal(isDayId('tomorrow'), false);
+    assert.equal(isDayId('2026-02-30'), false);
+    assert.equal(isDayId('2026-13-01'), false);
+    assert.equal(isDayId(''), false);
   });
 });

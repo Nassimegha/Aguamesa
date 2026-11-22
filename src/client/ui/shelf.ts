@@ -2,7 +2,7 @@
 // Un verre rejoint l'étagère après un versement parfait. Pas d'icônes emoji
 // pour représenter les verres : une petite silhouette dessinée en CSS.
 import { mountScreen, header, bindBack, type Screen } from './screen';
-import type { GlassModel } from './contractTypesTemp';
+import type { GlassModel } from '../../shared/types';
 
 const ALL_MODELS: GlassModel[] = ['pint', 'mug_giant', 'thimble', 'flute', 'coconut', 'teacup', 'goblet', 'tankard'];
 

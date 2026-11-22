@@ -13,7 +13,7 @@ import { showHome } from './ui/home';
 import { showNightResult } from './ui/nightResult';
 import { showLeaderboard } from './ui/leaderboard';
 import { showShelf } from './ui/shelf';
-import type { PlayerState, NightSummary, LeaderboardRow } from './ui/contractTypesTemp';
+import type { PlayerState, NightSummary, LeaderboardRow } from '../shared/types';
 
 const MOCK_PLAYER: PlayerState = {
   username: 'nassime', serverLevel: 12, streak: 12, bestStreak: 15, streakFreezes: 1,

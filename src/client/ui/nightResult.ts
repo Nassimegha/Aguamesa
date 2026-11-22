@@ -6,7 +6,7 @@
 //   illimité, sans toucher au serveur, à la série ni au classement.
 import { mountScreen, header, bindBack, type Screen } from './screen';
 import { createStreakWidget } from './streak';
-import type { NightSummary } from './contractTypesTemp';
+import type { NightSummary } from '../../shared/types';
 
 export interface NightResultActions {
   onShare(): void;

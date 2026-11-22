@@ -1,19 +1,19 @@
 // src/server/score.ts — P3 (Task 2)
-// POST /api/pour logic: re-read the day's GlassSpec, score with the pour
-// function (P1's src/shared/pour.ts when it lands; ./pourFallback until
-// then), and record the result — exactly once per glass per day.
+// POST /api/pour logic: re-read the day's GlassSpec, score with P1's
+// pour function (src/shared/pour.ts), and record the result — exactly
+// once per glass per day.
 //
 // One-try rule: the result is written with hSetNX, so the first writer
 // wins atomically (brief piège: no double score on double tap). A replay
 // returns the STORED result without recomputing.
 import type { DailyService, GlassSpec, PourResult } from '../shared/types';
 import { beatPercentFromScores, crowdLineFromStats } from './crowd';
-import { fallbackPour } from './pourFallback';
+import { pour } from '../shared/pour';
 import { glassCrowdKey, glassScoresKey, poursKey, type Store } from './redis';
 
 export { CROWD_MIN_PLAYERS, SEEDED_BEAT_PERCENT } from './crowd';
 
-/** §7 pour signature (P1's pour() and the fallback both match it). */
+/** §7 pour signature (P1's pour(); injectable for tests). */
 export type PourFn = (spec: GlassSpec, holdMs: number) => {
   level: number;
   score: number;
@@ -73,7 +73,7 @@ export async function pourGlass(
   store: Store,
   day: DailyService,
   input: PourInput,
-  pourFn: PourFn = fallbackPour
+  pourFn: PourFn = pour
 ): Promise<PourOutcome> {
   const { username, dayId, glassIndex, holdMs } = input;
   if (dayId !== day.dayId) {

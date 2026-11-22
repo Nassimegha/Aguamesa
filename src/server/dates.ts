@@ -25,6 +25,11 @@ export function toDayId(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
+/** True when the value is a real YYYY-MM-DD calendar date (no rollover). */
+export function isDayId(dayId: string): boolean {
+  return parseDayId(dayId) !== undefined;
+}
+
 /** Today's dayId in UTC. Pass `now` in tests to advance the date. */
 export function todayDayId(now: Date = new Date()): string {
   return toDayId(now);
