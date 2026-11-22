@@ -6,8 +6,7 @@ Usage: python3 tools/gen_customer_roster.py   (run from the repo root)
 The client manifest (src/client/world/customers.manifest.json, written by
 P2's blender/build_customers.py) is the source of truth. The server needs
 the same (id, location) pairs in the SAME ORDER to re-run the client's
-seeded guest pick (guests.ts) in the fallback-night generator
-(src/server/fallback.ts). guests.test.ts fails if the two drift.
+seeded guest pick for shareText. guests.test.ts fails if the two drift.
 """
 
 import json
@@ -24,8 +23,7 @@ def main() -> None:
         "// src/shared/customerRoster.ts — GENERATED, do not hand-edit.",
         "// Slim copy of src/client/world/customers.manifest.json (id + location only,",
         "// SAME ORDER): the server needs it to re-run the client's seeded guest pick",
-        "// (guests.ts) in the fallback-night generator (src/server/fallback.ts).",
-        "// Regenerate with: python3 tools/gen_customer_roster.py",
+        "// (guests.ts) for shareText. Regenerate with: python3 tools/gen_customer_roster.py",
         "// guests.test.ts fails loudly if this drifts from the manifest.",
         "import type { GuestRosterEntry } from './guests';",
         "",

@@ -1,8 +1,7 @@
 // src/shared/customerRoster.ts — GENERATED, do not hand-edit.
 // Slim copy of src/client/world/customers.manifest.json (id + location only,
 // SAME ORDER): the server needs it to re-run the client's seeded guest pick
-// (guests.ts) in the fallback-night generator (src/server/fallback.ts).
-// Regenerate with: python3 tools/gen_customer_roster.py
+// (guests.ts) for shareText. Regenerate with: python3 tools/gen_customer_roster.py
 // guests.test.ts fails loudly if this drifts from the manifest.
 import type { GuestRosterEntry } from './guests';
 

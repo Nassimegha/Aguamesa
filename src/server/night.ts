@@ -6,9 +6,13 @@
 //   - base tips = 30% of the total (ratio of the §10/§6.1 mock: 135/451),
 //     then the streak multiplier (+1%/night, +30% max). Scores untouched.
 //   - serverLevel = 1 + floor(tips / 100): ~1 level per 3 good nights.
-//   - customer→emoji map below, derived from the §6.1 shareText example;
-//     unknown customers get 🥛.
+//   - shareText guests = the client's seeded pick (shared/guests.ts), NOT
+//     GlassSpec.customer: the client shows pickGuestIds(day.location, dayId).
+//   - customer→emoji = shared emojiForCustomer (§6.1 glyphs for the
+//     classic five, stable palette pick for the other 175).
 import type { DailyService, NightSummary, PlayerState, PourResult } from '../shared/types';
+import { CUSTOMER_ROSTER } from '../shared/customerRoster';
+import { emojiForCustomer, pickGuestIds } from '../shared/guests';
 import { applyStreak } from './streak';
 import {
   allBoardKey,
@@ -23,15 +27,6 @@ import {
 export const TIPS_RATE = 0.3;
 export const TIPS_PER_LEVEL = 100;
 
-const CUSTOMER_EMOJI: Record<string, string> = {
-  giant: '🍺',
-  fairy: '🧚',
-  ghost: '👻',
-  pirate: '⛵',
-  wizard: '🧙',
-};
-const DEFAULT_CUSTOMER_EMOJI = '🥛';
-
 /** `☕ Nuit #24 🍺98 🧚100 👻71 ⛵88 🧙94 = 451 · 🔥12` (§6.1 shape). */
 export function buildShareText(
   night: number,
@@ -41,7 +36,7 @@ export function buildShareText(
   streak: number
 ): string {
   const parts = scores.map((score, i) => {
-    const emoji = CUSTOMER_EMOJI[customers[i] ?? ''] ?? DEFAULT_CUSTOMER_EMOJI;
+    const emoji = emojiForCustomer(customers[i] ?? '');
     return `${emoji}${score}`;
   });
   return `☕ Nuit #${night} ${parts.join(' ')} = ${total} · 🔥${streak}`;
@@ -170,6 +165,8 @@ export async function finishNight(
   await recordBest(store, allBoardKey(), username, total);
   await recordBest(store, streakBoardKey(), username, updated.bestStreak);
 
+  // The guests the client actually showed: same seeded pick, same dayId.
+  const guests = pickGuestIds(CUSTOMER_ROSTER, day.location, day.glasses.length, day.dayId);
   const summary: NightSummary = {
     dayId: day.dayId,
     scores,
@@ -179,13 +176,7 @@ export async function finishNight(
     ...(streak.streakMilestone === undefined ? {} : { streakMilestone: streak.streakMilestone }),
     freezeUsed: streak.freezeUsed,
     rank,
-    shareText: buildShareText(
-      day.night,
-      day.glasses.map((g) => g.customer),
-      scores,
-      total,
-      updated.streak
-    ),
+    shareText: buildShareText(day.night, guests, scores, total, updated.streak),
   };
   await store.set(nightKey(day.dayId, username), JSON.stringify(summary));
   return { ok: true, summary };

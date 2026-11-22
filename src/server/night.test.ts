@@ -54,6 +54,24 @@ describe('night', () => {
     );
   });
 
+  test("finish shareText names the seeded guests for the night's location, not GlassSpec.customer", async () => {
+    const store = new MemoryStore();
+    const day = makeDay('2026-11-24', 24);
+    // Decoys: classic customers would give 🍺×5 if the server still read
+    // the specs. The client shows the seeded pick for the night's ACTUAL
+    // location (cafe here), so the server must too.
+    for (const glass of day.glasses) glass.customer = 'giant';
+    await seedPours(store, day.dayId, 'nassime', [98, 100, 71, 88, 94]);
+    const outcome = await finishNight(store, day, 'nassime', defaultPlayer('nassime'));
+    assert.equal(outcome.ok, true);
+    if (!outcome.ok) return;
+    assert.equal(
+      outcome.summary.shareText,
+      '☕ Nuit #24 ☕98 ⛰️100 🧙71 🎭88 🧃94 = 451 · 🔥1'
+    );
+    assert.ok(!outcome.summary.shareText.includes('🍺'));
+  });
+
   test('finish computes total, tips with streak bonus, rank and persists everything', async () => {
     const store = new MemoryStore();
     const day = makeDay('2026-11-24', 24);
