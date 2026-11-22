@@ -9,7 +9,7 @@
 // Shape validation (validateDailyService) is what the Task 5 acceptance
 // criterion runs against: every content/days/*.json must pass it.
 import type { DailyService, GlassModel, GlassSpec, LocationId, Twist } from '../shared/types';
-import { isDayId } from './dates';
+import { isDayId, todayDayId } from './dates';
 import { fallbackDay } from './fallback';
 import day20261124 from '../../content/days/2026-11-24.json' with { type: 'json' };
 import day20261201 from '../../content/days/2026-12-01.json' with { type: 'json' };
@@ -165,7 +165,7 @@ export function getDay(dayId: string): DailyService | undefined {
   return DAYS[dayId];
 }
 
-/** Latest known day — the fallback when a post carries no dayId (Task 2). */
+/** Latest known day (Task 2 registry helper — not the no-dayId fallback). */
 export function latestDay(): DailyService {
   let best: DailyService | undefined;
   for (const day of Object.values(DAYS)) {
@@ -179,8 +179,8 @@ export function latestDay(): DailyService {
  * Which day a request plays. Scheduler posts (Task 3) pin their dayId in
  * postData: an authored day wins, otherwise the post plays the SAME seeded
  * fallback night publishing used for that dayId (fallback.ts) — never the
- * latest day. Anything without a real dayId (old posts, local dev, junk)
- * gets the latest day.
+ * latest day. Anything without a real dayId (playtest posts, local dev,
+ * junk) plays TODAY's seeded fallback night in UTC — never the latest day.
  */
 export function resolvePostDay(postData: unknown): DailyService {
   if (isRecord(postData)) {
@@ -191,5 +191,5 @@ export function resolvePostDay(postData: unknown): DailyService {
       if (isDayId(dayId)) return fallbackDay(dayId);
     }
   }
-  return latestDay();
+  return fallbackDay(todayDayId());
 }
